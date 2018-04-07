@@ -8,6 +8,7 @@
 from socket import *
 from datetime import datetime
 from _thread import *
+import time
 
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
@@ -15,7 +16,7 @@ serverSocket = socket(AF_INET,SOCK_STREAM)
 serverSocket.bind(('172.22.8.147',serverPort))
 serverSocket.listen(10)
 threadCount = 0
-chatrooms = []
+users = []
 currentMessage = ""
 sendingMessage = False
 
@@ -25,10 +26,13 @@ class User:
 
 def handle_client(connectionSocket, addr):
     global threadCount
-    global chatrooms
     running = True
     while running:
-        message = connectionSocket.recv(1024).decode('ascii') # wait for a message
+        try:
+            message = connectionSocket.recv(1024).decode('ascii') # wait for a message
+        except ConnectionResetError:
+            print("User: " + str(threadCount-1) + " did not respond in time.")
+            break
         if(message.upper() == "HELLO WORLD"):
             connectionSocket.send(("connection from " + addr[0]).encode())
         if(message.upper() == "QUIT"):
@@ -42,31 +46,44 @@ def handle_client(connectionSocket, addr):
     threadCount = threadCount - 1
     connectionSocket.close()
 
+#chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
 def chatroom(connectionSocket):
     connectionSocket.send("Connected to chatroom, please send a message or type 'QUIT CHATROOM' to quit.".encode())
     global currentMessage
     global sendingMessage
-    global chatrooms
-    index = len(chatrooms) # save the index of this chatroom
-    chatrooms.append(True)
+    global users
+    index = len(users) # save the index of this user
+    users.append(True)
     start_new_thread(sendChatroomMessage, (connectionSocket, index))
-    while chatrooms[index] == True:
-        message = connectionSocket.recv(1024).decode('ascii') # wait for a message
+    start_new_thread(receiveChatroomMessage, (connectionSocket, index))
+    while users[index] == True:
+        time.sleep(.05)
+    print("user " + index + " has exited the chatroom.")
+    
+def receiveChatroomMessage(connectionSocket, index):
+    global currentMessage
+    global sendingMessage
+    global users
+    while users[index] == True:
+        try:
+            message = connectionSocket.recv(1024).decode('ascii') # wait for a message
+        except ConnectionResetError:
+            print("User: " + str(index) + " did not respond in time.")
+            break
         if(message.upper() == "QUIT CHATROOM"):
             print("Quitting chatroom")
-            chatrooms[index] = False; # stop chatroom
+            users[index] = False; # stop chatroom
             break
         if(len(message) > 0):
             sendingMessage = True
             currentMessage = message
-            
-            
     connectionSocket.send("exiting chatroom".encode())
-
+    
 def sendChatroomMessage(connectionSocket, index):
+    global currentMessage
     global sendingMessage
-    global chatrooms
-    while(chatrooms[index] == True):
+    global users
+    while(users[index] == True):
         if(sendingMessage):
             print("attempting to send message to client")
             connectionSocket.send(currentMessage.encode())
