@@ -6,17 +6,17 @@ serverName = "172.22.8.147"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
-running = False
+running = True
 
 def chatRoom(clientSocket, x):
     global running
-    running = True
-
+    #clientSocket.listen(10)
     while running:
         msg = clientSocket.recv(1024).decode('ascii')
         if len(msg) > 0:
             print(msg)
         elif msg.upper() == "QUIT CHATROOM":
+            running = False
             break
 
 while True:
@@ -30,7 +30,8 @@ while True:
 
     if "Connected" in modifiedSentence:
         start_new_thread(chatRoom, (clientSocket, x))
-        while True:#chatroom while loop
+        #To Do: start a new thread for the client to send messages to server
+        while running:#chatroom while loop
             msg = input("Enter your message: ")
             clientSocket.send(msg.encode())
             if msg.upper() == "QUIT CHATROOM":
