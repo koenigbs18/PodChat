@@ -18,7 +18,7 @@ def chatRoomFromServer(clientSocket, x):
         msg = clientSocket.recv(1024).decode('ascii')
         if len(msg) > 0:
             print(msg)
-        if msg.upper() == "EXITING CHATROOM":
+        if msg.upper() == "\nEXITING CHATROOM":
             running = False
             break
 
@@ -27,17 +27,15 @@ def chatRoomToServer(clientSocket, x):
     global running
     #clientSocket.listen(10)
     while running:#chatroom while loop
-        x = msvcrt.kbhit()
-        
+        x = msvcrt.kbhit()#detects keyboard hit
         if x:
-            print("keyboard was hit")
             ch = msvcrt.getch().decode()
             #fix if statement-not detecting character
-            if ch == 'e':        
-                msg = input("\nEnter your message: ")
+            if ch == 'e':#if e key is hit        
+                msg = input("\nEnter your message:\n")
                 if len(msg) > 0:
                     clientSocket.send(msg.encode())
-                if msg.upper() == "QUIT CHATROOM":
+                if msg.upper() == "\nQUIT CHATROOM":
                     running = False
                     break
 
@@ -61,7 +59,7 @@ while True:
             
     #receiving = clientSocket.recv(1024).decode('ascii')
 
-    if modifiedSentence.upper() == "GOODBYE":
+    if modifiedSentence.upper() == "\nGOODBYE":
         sys.exit(0);
         #break
     
