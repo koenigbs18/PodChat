@@ -1,6 +1,8 @@
 from socket import *
 import sys
 from _thread import *
+import time
+import msvcrt
 
 serverName = "172.22.8.147"
 serverPort = 12009
@@ -8,34 +10,54 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
 running = True
 
-def chatRoom(clientSocket, x):
+#thread function for getting messages from server
+def chatRoomFromServer(clientSocket, x):
     global running
     #clientSocket.listen(10)
     while running:
         msg = clientSocket.recv(1024).decode('ascii')
         if len(msg) > 0:
             print(msg)
-        elif msg.upper() == "QUIT CHATROOM":
+        if msg.upper() == "EXITING CHATROOM":
             running = False
             break
 
+#thread function for sending messages to the server
+def chatRoomToServer(clientSocket, x):
+    global running
+    #clientSocket.listen(10)
+    while running:#chatroom while loop
+        x = msvcrt.kbhit()
+        
+        if x:
+            print("keyboard was hit")
+            ch = msvcrt.getch()
+            #fix if statement-not detecting character
+            if ch == 'e':        
+                msg = input("\nEnter your message: ")
+                if len(msg) > 0:
+                    clientSocket.send(msg.encode())
+                if msg.upper() == "QUIT CHATROOM":
+                    running = False
+                    break
+
+#main while loop for connection
 while True:
     sentence = input("Input lowercase sentence:")#hello world
-    #if not sentence:
-     #   break
     x = "hello"
     clientSocket.send(sentence.encode())
     modifiedSentence = clientSocket.recv(1024).decode('ascii')
     print("From Server:", modifiedSentence)
 
     if "Connected" in modifiedSentence:
-        start_new_thread(chatRoom, (clientSocket, x))
-        #To Do: start a new thread for the client to send messages to server
-        while running:#chatroom while loop
-            msg = input("Enter your message: ")
-            clientSocket.send(msg.encode())
-            if msg.upper() == "QUIT CHATROOM":
-                break
+        #thread for receiving messages from server
+        start_new_thread(chatRoomFromServer, (clientSocket, x))
+        #thread for sending messages to the server
+        start_new_thread(chatRoomToServer, (clientSocket, x))
+
+        while running:
+            time.sleep(.05)
+        
             
     #receiving = clientSocket.recv(1024).decode('ascii')
 
