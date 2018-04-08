@@ -36,13 +36,24 @@ while 1:
                 print("Reading from registeredusers.txt")
                 REASON = ""
                 for line in open("registeredusers.txt", "r"):
-                    if USERNAME not in line and PASSWORD not in line:
-                        LOGIN_STATUS = "Success"
+                    if len(line) > 0:
+                        print("Line contents: "+line)
+                        splitLine = line.split("\t")
+                        print("\n"+splitLine[1])
+                        print("\n"+splitLine[2])
+                        #if USERNAME == line.split("\t")[0].strip() and PASSWORD == line.split("\t")[1].strip():
+                        #if USERNAME == split1 and PASSWORD == split2:
+                        if USERNAME == splitLine[1] and PASSWORD == splitLine[2]:
+                            print("Correct username and password")
+                            LOGIN_STATUS = "Success"
+                            break
+                        else:
+                            print("The username and password you entered are incorrect")
+                            REASON = "The username and password you entered are incorrect\n"
+                            LOGIN_STATUS = "Failure"
+                            break
                     else:
-                        print("The username and password you entered are incorrect")
-                        REASON += "The username and password you entered are incorrect\n"
-                        LOGIN_STATUS = "Failure"
-                        break
+                        print("Line is not greater than 0")
                     print("Done reading from registeredusers.txt")
             except FileNotFoundError:
                 print("File Not Found")
@@ -100,4 +111,9 @@ while 1:
                 CONNECTION_SOCKET.send(SEND.encode())
             if LOGIN_STATUS.upper() == "SUCCESS":
                 CONNECTION_SOCKET.send("Welcome to PodChat!".encode())
+            if LOGIN_STATUS.upper() == "FAILURE":
+                SEND = "Login Status: FAILED\n"
+                SEND += REASON
+                SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
+                CONNECTION_SOCKET.send(SEND.encode())
     CONNECTION_SOCKET.close()
