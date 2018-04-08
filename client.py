@@ -31,7 +31,7 @@ def chatRoomToServer(clientSocket, x):
         
         if x:
             print("keyboard was hit")
-            ch = msvcrt.getch()
+            ch = msvcrt.getch().decode()
             #fix if statement-not detecting character
             if ch == 'e':        
                 msg = input("\nEnter your message: ")
