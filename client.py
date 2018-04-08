@@ -17,7 +17,7 @@ def chatRoomFromServer(clientSocket, x):
     while running:
         msg = clientSocket.recv(1024).decode('ascii')
         if len(msg) > 0:
-            print("\n" + msg)
+            print(msg)
         if msg.upper() == "\nEXITING CHATROOM":
             running = False
             break
@@ -32,7 +32,7 @@ def chatRoomToServer(clientSocket, x):
             ch = msvcrt.getch().decode()
             #fix if statement-not detecting character
             if ch == 'e':#if e key is hit        
-                msg = input("\nEnter your message: ")
+                msg = input("\nEnter your message:\n")
                 if len(msg) > 0:
                     clientSocket.send(msg.encode())
                 if msg.upper() == "\nQUIT CHATROOM":
