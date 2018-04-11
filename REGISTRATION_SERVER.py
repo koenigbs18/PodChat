@@ -12,7 +12,7 @@ import csv
 #Create a socket bound at SERVER_PORT
 SERVER_PORT = 12120
 SERVER_SOCKET = socket(AF_INET, SOCK_STREAM)
-SERVER_SOCKET.bind(('127.0.0.1', SERVER_PORT))
+SERVER_SOCKET.bind(('172.22.203.225', SERVER_PORT))
 SERVER_SOCKET.listen(10)
 print("Registration server is ready to receive")
 ACCESS_TIME = datetime.now()
@@ -21,17 +21,18 @@ print("Access time is ", ACCESS_TIME)
 while 1:
     CONNECTION_SOCKET, ADDR = SERVER_SOCKET.accept()
     print("from", ADDR)
-    REGISTRATION_STATUS = "Failure"
     LOGIN_STATUS = ""
     while 1:
         RESPONSE = CONNECTION_SOCKET.recv(1024).decode('ascii')
         print("Response message: ", RESPONSE)
         if RESPONSE.upper() == "HELLO":
             print("Entering hello code")
+            RESPONSE = ""
             CONNECTION_SOCKET.send("Input your choice:\n\tRegister\n\tLogin\n\tQuit\n".encode())
             RESPONSE = CONNECTION_SOCKET.recv(1024).decode('ascii')
         if RESPONSE.upper() == "LOGIN":
             print("Entering login code")
+            RESPONSE = ""
             CONNECTION_SOCKET.send("Enter username: ".encode())
             USERNAME = CONNECTION_SOCKET.recv(1024).decode('ascii')
             CONNECTION_SOCKET.send("Enter password: ".encode())
@@ -85,10 +86,10 @@ while 1:
                 print("Done reading from registeredusers.csv")
             except FileNotFoundError:
                 print("File Not Found")
-        print("where am i")
         #Start Registration code
         if RESPONSE.upper() == "REGISTER":
             print("Entering register code")
+            RESPONSE = ""
             CONNECTION_SOCKET.send("Enter email: ".encode())
             EMAIL = CONNECTION_SOCKET.recv(1024).decode('ascii')
             CONNECTION_SOCKET.send("Enter username: ".encode())
@@ -99,30 +100,32 @@ while 1:
             try:
                 print("Reading from registeredusers.csv")
                 REASON = ""
+                NEED_TO_REGISTER = False
+                REGISTRATION_ERROR = False
                 for line in open("registeredusers.csv", "r"):
                     if USERNAME not in line:
                         if USERNAME not in line and EMAIL not in line:
                             if len(PASSWORD) >= 6:
-                                REGISTRATION_STATUS = "NEEDS_TO_REGISTER"
+                                NEED_TO_REGISTER = True
                             else:
                                 print("Password length is shorter than 6")
                                 REASON += "Password length is shorter than 6\n"
-                                REGISTRATION_STATUS = "Failure"
+                                REGISTRATION_ERROR = True
                                 break
                         else:
                             print("The email you entered is already in use")
                             REASON += "The email you entered is already in use\n"
-                            REGISTRATION_STATUS = "Failure"
+                            REGISTRATION_ERROR = True
                             break
                     else:
                         print("The username you entered is already in use")
                         REASON += "The username  you entered is already in use\n"
-                        REGISTRATION_STATUS = "Failure"
+                        REGISTRATION_ERROR = True
                         break
                     print("Done reading from registeredusers.txt")
             except FileNotFoundError:
                 print("File Not Found")
-            if REGISTRATION_STATUS.upper() == "NEEDS_TO_REGISTER":
+            if NEED_TO_REGISTER:
                 print("Entering needs to register code")
                 ACCESS_TIME = datetime.now()
                 STRING_ACCESS_TIME = ACCESS_TIME.strftime('%m/%d/%Y %H:%M:%S')
@@ -135,20 +138,20 @@ while 1:
                 SEND = "Registration Status: SUCCESS\n"
                 SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
                 CONNECTION_SOCKET.send(SEND.encode())
-            if REGISTRATION_STATUS.upper() == "FAILURE":
+            if REGISTRATION_ERROR:
                 print("Entering registration failure code")
                 SEND = "Registration Status: FAILED\n"
                 SEND += REASON
                 SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
                 CONNECTION_SOCKET.send(SEND.encode())
-            if LOGIN_STATUS.upper() == "SUCCESS":
-                print("Entering login status success code")
-                print("Sending Welcome message to client")
-                CONNECTION_SOCKET.send("Welcome".encode())
-            if LOGIN_STATUS.upper() == "FAILURE":
-                print("Entering login status failure code")
-                SEND = "Login Status: FAILED\n"
-                SEND += REASON
-                SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
-                CONNECTION_SOCKET.send(SEND.encode())
+        if LOGIN_STATUS.upper() == "SUCCESS":
+            print("Entering login status success code")
+            print("Sending Welcome message to client")
+            CONNECTION_SOCKET.send("Welcome".encode())
+        if LOGIN_STATUS.upper() == "FAILURE":
+            print("Entering login status failure code")
+            SEND = "Login Status: FAILED\n"
+            SEND += REASON
+            SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
+            CONNECTION_SOCKET.send(SEND.encode())
     CONNECTION_SOCKET.close()
