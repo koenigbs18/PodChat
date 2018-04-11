@@ -1,5 +1,0 @@
-test@email.com  testuser    123456
-test2@email.com	testuser2	123456	
-test3@email.com	bob	1233555	
-test4@email.com	testuser4	123456	
-test5@email.com	testuser5	123456	
