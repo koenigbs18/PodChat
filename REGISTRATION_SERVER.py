@@ -1,15 +1,18 @@
+"""
 #REGISTRATION_SERVER.py
 #Server program for registering an account
 #Created By: Paul Knisely
 #Created on: 2/26/2018
+"""
 
 from socket import *
 from datetime import datetime
+import csv
 
 #Create a socket bound at SERVER_PORT
-SERVER_PORT = 12116
+SERVER_PORT = 12120
 SERVER_SOCKET = socket(AF_INET, SOCK_STREAM)
-SERVER_SOCKET.bind(('172.22.203.225', SERVER_PORT))
+SERVER_SOCKET.bind(('127.0.0.1', SERVER_PORT))
 SERVER_SOCKET.listen(10)
 print("Registration server is ready to receive")
 ACCESS_TIME = datetime.now()
@@ -24,9 +27,11 @@ while 1:
         RESPONSE = CONNECTION_SOCKET.recv(1024).decode('ascii')
         print("Response message: ", RESPONSE)
         if RESPONSE.upper() == "HELLO":
+            print("Entering hello code")
             CONNECTION_SOCKET.send("Input your choice:\n\tRegister\n\tLogin\n\tQuit\n".encode())
             RESPONSE = CONNECTION_SOCKET.recv(1024).decode('ascii')
         if RESPONSE.upper() == "LOGIN":
+            print("Entering login code")
             CONNECTION_SOCKET.send("Enter username: ".encode())
             USERNAME = CONNECTION_SOCKET.recv(1024).decode('ascii')
             CONNECTION_SOCKET.send("Enter password: ".encode())
@@ -34,7 +39,11 @@ while 1:
             #Open the registeredusers.txt file to check the userID
             try:
                 print("Reading from registeredusers.txt")
+                RESPONSE = ""
                 REASON = ""
+                LOGIN_STATUS = ""
+                """
+                old logic for reading username and password. will cut when everything is 100% working
                 for line in open("registeredusers.txt", "r"):
                     if len(line) > 0:
                         print("Line contents: "+line)
@@ -55,10 +64,31 @@ while 1:
                     else:
                         print("Line is not greater than 0")
                     print("Done reading from registeredusers.txt")
+                """
+                with open('registeredusers.csv', 'r') as USER_FILE:
+                    READER = csv.reader(USER_FILE)
+                    for row in READER:
+                        print("Printing current row: "+str(row))
+                        if USERNAME == str(row[1]) and PASSWORD == str(row[2]):
+                            print("Email: "+str(row[0]))
+                            print("Username: "+str(row[1]))
+                            print("Password: "+str(row[2]))
+                            print("Login successful")
+                            LOGIN_STATUS = "Success"
+                        else:
+                            print("The username and password you entered are incorrect")
+                            REASON = "The username and password you entered are incorrect\n"
+                            LOGIN_STATUS = "Failure"
+                        if LOGIN_STATUS.upper() == "SUCCESS":
+                            print("breaking from login status success if statement")
+                        print("Done with row")
+                print("Done reading from registeredusers.csv")
             except FileNotFoundError:
                 print("File Not Found")
+        print("where am i")
         #Start Registration code
         if RESPONSE.upper() == "REGISTER":
+            print("Entering register code")
             CONNECTION_SOCKET.send("Enter email: ".encode())
             EMAIL = CONNECTION_SOCKET.recv(1024).decode('ascii')
             CONNECTION_SOCKET.send("Enter username: ".encode())
@@ -67,9 +97,9 @@ while 1:
             PASSWORD = CONNECTION_SOCKET.recv(1024).decode('ascii')
             #Open the registeredusers.txt file to check the userID
             try:
-                print("Reading from registeredusers.txt")
+                print("Reading from registeredusers.csv")
                 REASON = ""
-                for line in open("registeredusers.txt", "r"):
+                for line in open("registeredusers.csv", "r"):
                     if USERNAME not in line:
                         if USERNAME not in line and EMAIL not in line:
                             if len(PASSWORD) >= 6:
@@ -93,25 +123,30 @@ while 1:
             except FileNotFoundError:
                 print("File Not Found")
             if REGISTRATION_STATUS.upper() == "NEEDS_TO_REGISTER":
+                print("Entering needs to register code")
                 ACCESS_TIME = datetime.now()
                 STRING_ACCESS_TIME = ACCESS_TIME.strftime('%m/%d/%Y %H:%M:%S')
                 print("Access time is ", STRING_ACCESS_TIME)
-                REGISTRATION_RECORD = EMAIL+"\t"+USERNAME+"\t"+PASSWORD+"\t\n"
+                REGISTRATION_RECORD = EMAIL+","+USERNAME+","+PASSWORD+"\n"
                 #REGISTRATION_RECORD += USER_PASSWORD+"\t"+ADDR[0]+"\t"+STRING_ACCESS_TIME+"\n"
-                OUTPUT_FILE = open("registeredusers.txt", "a")
+                OUTPUT_FILE = open("registeredusers.csv", "a")
                 OUTPUT_FILE.write(REGISTRATION_RECORD)
                 OUTPUT_FILE.close()
                 SEND = "Registration Status: SUCCESS\n"
                 SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
                 CONNECTION_SOCKET.send(SEND.encode())
             if REGISTRATION_STATUS.upper() == "FAILURE":
+                print("Entering registration failure code")
                 SEND = "Registration Status: FAILED\n"
                 SEND += REASON
                 SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
                 CONNECTION_SOCKET.send(SEND.encode())
             if LOGIN_STATUS.upper() == "SUCCESS":
-                CONNECTION_SOCKET.send("Welcome to PodChat!".encode())
+                print("Entering login status success code")
+                print("Sending Welcome message to client")
+                CONNECTION_SOCKET.send("Welcome".encode())
             if LOGIN_STATUS.upper() == "FAILURE":
+                print("Entering login status failure code")
                 SEND = "Login Status: FAILED\n"
                 SEND += REASON
                 SEND += "Input your choice:\n\tRegister\n\tLogin\n\tQuit\n"
