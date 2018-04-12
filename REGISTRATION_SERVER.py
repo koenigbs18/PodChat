@@ -12,7 +12,7 @@ import csv
 #Create a socket bound at SERVER_PORT
 SERVER_PORT = 12120
 SERVER_SOCKET = socket(AF_INET, SOCK_STREAM)
-SERVER_SOCKET.bind(('172.22.203.225', SERVER_PORT))
+SERVER_SOCKET.bind(('127.0.0.1', SERVER_PORT))
 SERVER_SOCKET.listen(10)
 print("Registration server is ready to receive")
 ACCESS_TIME = datetime.now()

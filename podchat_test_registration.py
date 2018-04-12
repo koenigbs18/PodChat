@@ -16,7 +16,7 @@ clientSocket.connect((serverName,serverPort))
 print("Connection successful")
 print("\n")
 
-print("Welcome to the registration program!!")
+print("Welcome to the registration program-podchat!!")
 print("\n")
 
 
