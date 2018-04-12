@@ -33,6 +33,7 @@ class ENUMS(Enum):
     FAILURE_INCORRECT = 2 # Username/password incorrect
     FAILURE_GENERIC = 3
     READ_ERROR = 4
+    CONNECTION_ERROR = 5
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -40,11 +41,13 @@ def handle_client(connectionSocket, addr):
     running = True
     while running:
         # send a message containing all possible user options
-        connectionSocket.send("Input your choice:\n\tRegister\n\tLogin\n\tQuit\n".encode())
+        # connectionSocket.send("Input your choice:\n\tRegister\n\tLogin\n\tQuit\n".encode())
         # receive message
         try:
             message = connectionSocket.recv(1024).decode('ascii') # wait for a message
-        except ConnectionResetError:
+        except ConnectionResetError as err:
+            print(err)
+            print(err.args)
             print("User: " + str(threadCount-1) + " did not respond in time.")
             break
         if(loggedIn == False):
@@ -52,22 +55,33 @@ def handle_client(connectionSocket, addr):
             if(message.upper() == "LOGIN"):
                 print("login protocol")
                 # connect user to chatroom
-                if(login(connectionSocket) == ENUMS.SUCCESS):
+                LOGIN_STATUS = login(connectionSocket)
+                if(LOGIN_STATUS == ENUMS.SUCCESS):
                     loggedIn = True
+                elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
+                    break
+                continue
             if(message.upper() == "REGISTER"):
                 print("Registration protocol")
-                registration(connectionSocket)
-        else:
+                if(registration(connectionSocket) == ENUMS.CONNECTION_ERROR):
+                    break
+                continue
+        if(loggedIn == True):
             # options after login
             if(message.upper() == "CHATROOM"):
                 # connect user to chatroom
                 chatroom(connectionSocket)
+                continue
         # all user options
         if(message.upper() == "HELLO WORLD"):
             connectionSocket.send(("connection from " + addr[0]).encode())
+            continue
         if(message.upper() == "QUIT"):
             connectionSocket.send("goodbye".encode())
             running = False
+            continue
+        print("INVALID RESPONSE")
+        connectionSocket.send("INVALID RESPONSE".encode())
         
     
     print("Thread Addr " + addr[0] + " has stopped running")
@@ -80,38 +94,53 @@ def registration(connectionSocket):
 
 def login(connectionSocket):
     print("login protocol")
+    # default status
+    STATUS = ENUMS.NULL
+    # request login info from client
     connectionSocket.send("USERNAME AND PASSWORD".encode())
     #LOGININFO: USERNAME[0],PASSWORD[1]
     try:
-        LOGININFO = connectionSocket.recv(1024).decode('ascii').split(",")
-    except ValueError:
+        LOGININFO = connectionSocket.recv(1024).decode('ascii')
+    except ConnectionResetError as err:
+        print(err)
+        print(err.args)
+        return ENUMS.CONNECTION_ERROR
+    try:
+        LOGININFO = LOGININFO.split(",")
+    except ValueError as err:
+        print(err)
+        print(err.args)
+        connectionSocket.send("FAILURE: INCORRECT FORMAT".encode())
         return ENUMS.FAILURE_GENERIC
     #Open the registeredusers.txt file to check the username & password
     try:
          print("Reading from registeredusers.txt")
-         STATUS = ENUMS.NULL
          with open('registeredusers.csv', 'r') as USER_FILE:
+             #login info incorrect by default, set to success when we find a match
+            STATUS = ENUMS.FAILURE_INCORRECT
             READER = csv.reader(USER_FILE)
             for row in READER:
-                print("Printing current row: "+str(row))
                 if LOGININFO[0] == str(row[1]) and LOGININFO[1] == str(row[2]):
-                    print("Email: "+str(row[0]))
-                    print("Username: "+str(row[1]))
-                    print("Password: "+str(row[2]))
-                    print("Login successful")
                     STATUS = ENUMS.SUCCESS
-                else:
-                    print("The username and password you entered are incorrect")
-                    REASON = "The username and password you entered are incorrect\n"
-                    STATUS = ENUMS.FAILURE_INCORRECT
-                if STATUS == ENUMS.SUCCESS:
-                    print("breaking from login status success if statement")
-                print("Done with row")
-            print("Done reading from registeredusers.csv")
+                    break
     except FileNotFoundError:
-        print("File Not Found")
         open("UserProfile.txt", 'w') # create the file+
+        STATUS = ENUMS.READ_ERROR
+
     # Return the enum status
+    if(STATUS == ENUMS.SUCCESS):
+        print("SUCCESS: LOGIN SUCCESSFUL")
+        connectionSocket.send("SUCCESS: LOGIN SUCCESSFUL".encode())
+    elif(STATUS == ENUMS.READ_ERROR):
+        print("FAILURE: SERVER FILE ERROR")
+        connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
+    elif(STATUS == ENUMS.FAILURE_INCORRECT):
+        print("FAILURE: INCORRECT LOGIN INFO")
+        connectionSocket.send("FAILURE: INCORRECT LOGIN INFO".encode())
+    elif(STATUS == ENUMS.NULL):
+        print("FAILURE: NULL SERVER RESPONSE")
+        connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
+
     return STATUS
         
 #chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
