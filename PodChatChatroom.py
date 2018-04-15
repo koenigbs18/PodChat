@@ -68,7 +68,7 @@ def handle_client(connectionSocket, addr):
     connectionSocket.close()
 
 def registration(connectionSocket):
-	# Registration code goes here
+       # Registration code goes here
 	
 def login(connectionSocket):
     connectionSocket.send("Enter username: ".encode())
