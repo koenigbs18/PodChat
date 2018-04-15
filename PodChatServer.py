@@ -34,6 +34,7 @@ class ENUMS(Enum):
     FAILURE_GENERIC = 3
     READ_ERROR = 4
     CONNECTION_ERROR = 5
+    REGISTRATION_REQUIRED = 6
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -89,8 +90,64 @@ def handle_client(connectionSocket, addr):
     connectionSocket.close()
 
 def registration(connectionSocket):
-    # nothing
-    print("there's nothing here yet dummy")
+    print("Entering registration code")
+    connectionSocket.send("REGISTRATION".encode())
+    #REGISTRATIONINFO: EMAIL[0],USERNAME[1],PASSWORD[2]
+    try:
+        REGINFO = connectionSocket.recv(1024).decode('ascii').split(",")
+    except ValueError:
+        return ENUMS.FAILURE_GENERIC
+    #Open the registeredusers.txt file to check the userID
+    try:
+        print("Reading from registeredusers.csv")
+        REASON = ""
+        STATUS = ENUMS.NULL
+        with open('registeredusers.csv', 'r') as USER_FILE:
+            READER = csv.reader(USER_FILE)
+            for row in READER:
+                print("Printing current row: "+str(row))
+                if REGINFO[0] not in row:
+                    if REGINFO[0] not in row and REGINFO[1] not in row:
+                        if len(REGINFO[2]) >= 6:
+                            STATUS = ENUMS.REGISTRATION_REQUIRED
+                            print("Registration required")
+                        else:
+                            print("Password length is shorter than 6")
+                            REASON += "Password length is shorter than 6\n"
+                            STATUS = ENUMS.FAILURE_GENERIC
+                            break
+                    else:
+                        print("The email you entered is already in use")
+                        REASON += "The email you entered is already in use\n"
+                        STATUS = ENUMS.FAILURE_GENERIC
+                        break
+                else:
+                    print("The username you entered is already in use")
+                    REASON += "The username you entered is already in use\n"
+                    STATUS = ENUMS.FAILURE_GENERIC
+                    break
+                print("Done with row")
+            print("Done reading from registeredusers.csv")
+    except FileNotFoundError:
+        print("File Not Found")
+        open("registeredusers.csv", 'w') #create file
+        STATUS = ENUMS.READ_ERROR
+    # Return the enum status
+    if STATUS == ENUMS.SUCCESS:
+        print("SUCCESS: REGISTRATION SUCCESSFUL")
+        connectionSocket.send("SUCCESS: REGISTRATION SUCCESSFUL".encode())
+    elif STATUS == ENUMS.READ_ERROR:
+        print("FAILURE: SERVER FILE ERROR")
+        connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
+    elif STATUS == ENUMS.FAILURE_GENERIC:
+        print("FAILURE: REGISTRATION ERROR")
+        SEND = "FAILURE: REGISTRATION ERROR\n"
+        SEND += REASON
+        connectionSocket.send(SEND.encode())
+    elif STATUS == ENUMS.NULL:
+        print("FAILURE: NULL SERVER RESPONSE")
+        connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
+    return STATUS
 
 def login(connectionSocket):
     print("login protocol")
