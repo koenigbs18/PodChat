@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="ttk.Frame" id="root">
+    <layout>
+      <property name="column">0</property>
+      <property name="propagate">True</property>
+      <property name="row">0</property>
+    </layout>
+    <child>
+      <object class="ttk.Entry" id="Entry_2">
+        <property name="justify">center</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="padx">50</property>
+          <property name="pady">100</property>
+          <property name="propagate">True</property>
+          <property name="row">0</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="tk.Label" id="Username">
+        <property name="activebackground">#000000</property>
+        <property name="activeforeground">#ffffff</property>
+        <property name="background">#000000</property>
+        <property name="foreground">#ffffff</property>
+        <property name="state">normal</property>
+        <property name="text" translatable="yes">Username</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">0</property>
+          <property name="sticky">w</property>
+        </layout>
+      </object>
+    </child>
+  </object>
+</interface>
