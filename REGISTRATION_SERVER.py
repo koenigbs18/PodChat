@@ -4,7 +4,6 @@
 #Created By: Paul Knisely
 #Created on: 2/26/2018
 """
-
 from socket import *
 from datetime import datetime
 import csv

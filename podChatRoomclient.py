@@ -8,6 +8,7 @@ serverName = "172.22.8.147"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
+#print(clientSocket.recv(1024).decode('ascii'))
 running = True
 
 #thread function for getting messages from server
@@ -41,6 +42,7 @@ def chatRoomToServer(clientSocket, x):
 
 #main while loop for connection
 while True:
+    print("Input your choice:\n\tregister\n\tlogin\n\tquit\n")
     sentence = input("Input lowercase sentence:")#hello world
     x = "hello"
     clientSocket.send(sentence.encode())

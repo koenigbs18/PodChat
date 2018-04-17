@@ -8,18 +8,19 @@ from socket import *
 import time
 
 # create a socket and connect to the server
-serverName = "127.0.0.1"
-serverPort = 12120
-clientSocket = socket(AF_INET, SOCK_STREAM)
-clientSocket.connect((serverName,serverPort))
+try:
+    serverName = "127.0.0.1"
+    serverPort = 12120
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((serverName,serverPort))
 
-print("Connection successful")
-print("\n")
-
-print("Welcome to the registration program-podchat!!")
-print("\n")
-
-
+    print("Connection successful")
+    print("\n")
+    print("Welcome to the registration program-podchat!! The backend oooohhhh yeeahh!")
+    print("\n")
+        
+except ConnectionRefusedError:
+    print("Server is down.")
 
 while 1:
     print("Sending hello to server")
@@ -37,3 +38,4 @@ while 1:
             clientSocket.send(SEND_BACK.encode())
     clientSocket.close()
     break
+

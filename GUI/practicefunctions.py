@@ -1,9 +1,7 @@
 
 
 
+def hello(username, password):
 
-
-
-def hello(event, user, passw):
-    print("Username: ", user)
-    print("Password: ", passw)
+    print("Username: ", username)
+    print("Password: ", password)
