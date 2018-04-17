@@ -1,6 +1,7 @@
 from tkinter import *
 import tkinter as tk
 
+
 class PodChatApp(tk.Tk):
 
         def __init__(self, *args, **kwargs):
@@ -15,7 +16,7 @@ class PodChatApp(tk.Tk):
 
             self.frames = {}
 
-            for F in (Login, Register, Menu, NewMessage, ChatRoom):
+            for F in (Login, Register, Menu, CreateChatRoom, ChatRoomBtns):
                 frame = F(container, self)
 
                 self.frames[F] = frame
@@ -41,11 +42,11 @@ class Login(tk.Frame):
 
         #username label
         self.userNameLabel = Label(self, text="Username: ", background='black', fg='white')
-        self.userNameLabel.grid(row=1, sticky=W, padx=(50, 0), pady=(50,0))
+        self.userNameLabel.grid(row=1, sticky=W, padx=(50, 0), pady=(50, 0))
 
         #username entry
         self.userNameEntry = Entry(self)
-        self.userNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(50,0))
+        self.userNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(50, 0))
 
         #password label
         self.pwdLabel = Label(self, text="Password:", background='black', fg='white')
@@ -114,7 +115,7 @@ class Menu(tk.Frame):
         self.grid()
 
         #Sign out button
-        self.signOutButton = Button(self, text="Sign Out", background='red', fg='white')
+        self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.show_frame(Login))
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message
@@ -122,7 +123,7 @@ class Menu(tk.Frame):
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
-        self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoom))
+        self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoomBtns))
         self.chatRooms.grid(row=2, column=4)
 
         #Messages Button
@@ -133,7 +134,7 @@ class Menu(tk.Frame):
         self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
         self.friendsList.grid(row=4, column=4)
 
-class NewMessage(tk.Frame):
+class CreateChatRoom(tk.Frame):
 
     #default initial frame code for every frame
     def __init__(self, parent, controller):
@@ -142,33 +143,41 @@ class NewMessage(tk.Frame):
         self.grid()
 
         #Back button
-        self.backButton = Button(self, text="Back", background='red', fg='white')
+        self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
         self.backButton.grid(row=0, padx=10, pady=10)
 
-        self.newMsgLabel = Label(self, text="New Message", background='black', fg='white')
-        self.newMsgLabel.grid(row=0, column=1, padx=(0,25), pady=(15, 0))
+        self.createChatRoomLabel = Label(self, text="Create Chat Room", background='black', fg='white')
+        self.createChatRoomLabel.grid(row=0, column=1, padx=(0, 25), pady=(15, 0))
+
+        # Room Name: label
+        self.RoomNameLabel = Label(self, text="Room: ", background='black', fg='white')
+        self.RoomNameLabel.grid(row=1, sticky=E, padx=(50, 0), pady=(25, 0))
+
+        # Room Name: entry
+        self.RoomNameEntry = Entry(self)
+        self.RoomNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
 
         # To: label
         self.toLabel = Label(self, text="To: ", background='black', fg='white')
-        self.toLabel.grid(row=1, sticky=W, padx=(50, 0), pady=(25, 0))
+        self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
 
         # To: entry
         self.toEntry = Entry(self)
-        self.toEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
+        self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
 
         #message window frame
-        self.msgWindow = Frame(self, width=200, height=200)
-        self.msgWindow.grid(row=2, column=1, pady=(5,0), columnspan=2)
+        self.msgWindow = Frame(self, width=150, height=200)
+        self.msgWindow.grid(row=3, column=1, pady=(5, 0), columnspan=2, sticky=W)
 
         #Message entry
-        self.msgEntry = Entry(self, width=25)
-        self.msgEntry.grid(row=3, column=0, columnspan=2, padx=(30, 0), pady=(5,0))
+        self.msgEntry = Entry(self, width=24)
+        self.msgEntry.grid(row=4, column=0, columnspan=2, padx=(93, 0), pady=(5, 0), sticky=W)
 
         #Send button
         self.sendButton = Button(self, text="Send", background='blue', fg='white')
-        self.sendButton.grid(row=3, column=1, pady=(5,0), padx=(165,0))
+        self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
 
-class ChatRoom(Frame):
+class ChatRoomBtns(Frame):
 
     #default initial frame code for every frame
     def __init__(self, parent, controller):
@@ -191,7 +200,7 @@ class ChatRoom(Frame):
         self.subBtnFrame = Frame(self, width=200, height=100)
         self.subBtnFrame.grid(row=3, column=4)
 
-        self.create = Button(self.subBtnFrame, text="Create", background='white', fg='black', command=lambda: controller.show_frame(NewMessage))
+        self.create = Button(self.subBtnFrame, text="Create", background='white', fg='black', command=lambda: controller.show_frame(CreateChatRoom))
         self.create.grid(row=3, column=4)
 
         self.join = Button(self.subBtnFrame, text="Join", background='white', fg='black')
