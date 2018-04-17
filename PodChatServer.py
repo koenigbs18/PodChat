@@ -132,6 +132,14 @@ def registration(connectionSocket):
         print("File Not Found")
         open("registeredusers.csv", 'w') #create file
         STATUS = ENUMS.READ_ERROR
+    # Write registration code to file
+    if STATUS == ENUMS.REGISTRATION_REQUIRED:
+        print("Entering needs to register code")
+        REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
+        OUTPUT_FILE = open("registeredusers.csv", "a")
+        OUTPUT_FILE.write(REGISTRATION_RECORD)
+        OUTPUT_FILE.close()
+        STATUS = ENUMS.SUCCESS
     # Return the enum status
     if STATUS == ENUMS.SUCCESS:
         print("SUCCESS: REGISTRATION SUCCESSFUL")
