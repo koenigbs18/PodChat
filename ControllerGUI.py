@@ -1,46 +1,39 @@
 from tkinter import *
 import tkinter as tk
-
 from socket import *
+import ctypes  # An included library with Python install.
 import time
 
-#client code
-
+# client code
 # create a socket and connect to the server
-
-# serverName = "127.0.0.1"
-# serverPort = 12120
-# clientSocket = socket(AF_INET, SOCK_STREAM)
-# clientSocket.connect((serverName, serverPort))
-#
-# print("Connection successful")
-# print("\n")
-# print("Welcome to the registration program-podchat!! The backend oooohhhh yeeahh!")
-# print("\n")
-#
-# while 1:
-#     print("Sending hello to server")
-#     clientSocket.send("hello".encode())
-#     while 1:
-#         print("Waiting for response from server")
-#         SERVER_INFO = clientSocket.recv(1024).decode('ascii')
-#         if SERVER_INFO.upper() == "WELCOME":
-#             print("Enter if statement")
-#             print(SERVER_INFO)
-#             clientSocket.close()
-#         else:
-#             print("Entering else statement")
-#             SEND_BACK = input(SERVER_INFO)
-#             clientSocket.send(SEND_BACK.encode())
-#     clientSocket.close()
-#     break
-
+serverName = "172.22.8.147"
+serverPort = 12009
+clientSocket = socket(AF_INET, SOCK_STREAM)
+clientSocket.connect((serverName, serverPort))
 
 #GUI Code
 class PodChatApp(tk.Tk):
+        #
+        # def connectToServer(self):
+        #
+        #     while 1:
+        #         print("Sending hello to server")
+        #         clientSocket.send("hello".encode())
+        #         while 1:
+        #             print("Waiting for response from server")
+        #             SERVER_INFO = clientSocket.recv(1024).decode('ascii')
+        #             if SERVER_INFO.upper() == "WELCOME":
+        #                 print("Enter if statement")
+        #                 print(SERVER_INFO)
+        #                 clientSocket.close()
+        #             else:
+        #                 print("Entering else statement")
+        #                 SEND_BACK = input(SERVER_INFO)
+        #                 clientSocket.send(SEND_BACK.encode())
+        #         clientSocket.close()
+        #         break
 
         def __init__(self, *args, **kwargs):
-
             tk.Tk.__init__(self, *args, **kwargs)
             container = tk.Frame(self)
 
@@ -63,6 +56,41 @@ class PodChatApp(tk.Tk):
         def show_frame(self, cont):
             frame = self.frames[cont]
             frame.tkraise()
+
+        def login_protocol(self, userNameEntry, pwdEntry):
+            clientSocket.send("Login".encode())
+
+            try:
+                SERVER_INFO = clientSocket.recv(1024).decode('ascii')
+                print("server info:", SERVER_INFO)
+            except ConnectionResetError as e:
+                print(e)
+                print(e.args)
+                print("Connection timed out.")
+                self.Mbox('Pod Chat', 'Could not reach server, please try again.', 1)
+                return
+
+
+
+            print("username: ", userNameEntry.get())
+            print("password: ", pwdEntry.get())
+
+            login = userNameEntry.get() + "," + pwdEntry.get()
+            clientSocket.send(login.encode())
+            loginValidation = clientSocket.recv(1024).decode('ascii')
+
+            if "SUCCESS" in loginValidation.upper():
+                self.show_frame(Menu)
+                return
+            else:
+                print(loginValidation)
+                self.Mbox('Pod Chat', loginValidation, 1)
+                return
+
+        def Mbox(self, title, text, style):
+            return ctypes.windll.user32.MessageBoxW(0, text, title, style)
+
+
 
 class Login(tk.Frame):
 
@@ -92,7 +120,7 @@ class Login(tk.Frame):
         self.pwdEntry.grid(row=2, column=1, sticky=W, padx=(0, 50))
 
         #login button
-        self.login = Button(self, text="Login", background='blue', fg='white', command=lambda: controller.show_frame(Menu))
+        self.login = Button(self, text="Login", background='blue', fg='white', command=lambda: controller.login_protocol(self.userNameEntry, self.pwdEntry))
         self.login.grid(row=3, column=1, padx=(30, 0))
 
         # register label
@@ -249,7 +277,10 @@ class ChatRoomBtns(Frame):
         self.friendsList = Button(self, text="Friends List.", background='blue', fg='white')
         self.friendsList.grid(row=6, column=4)
 
+
+
 app = PodChatApp()
+
 
 app.title("Pod Chat")
 
