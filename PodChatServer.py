@@ -43,6 +43,7 @@ def handle_client(connectionSocket, addr):
     global threadCount
     loggedIn = False
     running = True
+    USERNAME = ""
     while running:
         # send a message containing all possible user options
         # connectionSocket.send("Input your choice:\n\tRegister\n\tLogin\n\tQuit\n".encode())
@@ -59,9 +60,12 @@ def handle_client(connectionSocket, addr):
             if(message.upper() == "LOGIN"):
                 print("login protocol")
                 # connect user to chatroom
-                LOGIN_STATUS = login(connectionSocket)
+                returnMessage = login(connectionSocket)
                 if(LOGIN_STATUS == ENUMS.SUCCESS):
                     loggedIn = True
+                    returnMessage = returnMessage.split(',')
+                    LOGIN_STATUS = returnMessage[0]
+                    USERNAME = returnMessage[1]
                 elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
                     break
                 continue
@@ -211,6 +215,8 @@ def login(connectionSocket):
     # Return the enum status
     if(STATUS == ENUMS.SUCCESS):
         print("SUCCESS: LOGIN SUCCESSFUL")
+        # return ENUM.STATUS,USERNAME
+        return (str(STATUS) + "," + LOGININFO[0])
         connectionSocket.send("SUCCESS: LOGIN SUCCESSFUL".encode())
     elif(STATUS == ENUMS.READ_ERROR):
         print("FAILURE: SERVER FILE ERROR")
