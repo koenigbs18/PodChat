@@ -60,12 +60,13 @@ def handle_client(connectionSocket, addr):
             if(message.upper() == "LOGIN"):
                 print("login protocol")
                 # connect user to chatroom
-                returnMessage = login(connectionSocket)
+                returnMessage = login(connectionSocket).split(',')
+                LOGIN_STATUS = returnMessage[0]
+                USERNAME = returnMessage[1]
                 if(LOGIN_STATUS == ENUMS.SUCCESS):
                     loggedIn = True
                     returnMessage = returnMessage.split(',')
-                    LOGIN_STATUS = returnMessage[0]
-                    USERNAME = returnMessage[1]
+                    
                 elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
                     break
                 continue
@@ -216,8 +217,8 @@ def login(connectionSocket):
     if(STATUS == ENUMS.SUCCESS):
         print("SUCCESS: LOGIN SUCCESSFUL")
         # return ENUM.STATUS,USERNAME
-        return (str(STATUS) + "," + LOGININFO[0])
         connectionSocket.send("SUCCESS: LOGIN SUCCESSFUL".encode())
+        return (str(STATUS) + "," + LOGININFO[0])
     elif(STATUS == ENUMS.READ_ERROR):
         print("FAILURE: SERVER FILE ERROR")
         connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
@@ -228,7 +229,7 @@ def login(connectionSocket):
         print("FAILURE: NULL SERVER RESPONSE")
         connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
 
-    return STATUS
+    return (str(STATUS) + "," + "")
         
 #chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
 def chatroom(connectionSocket):
