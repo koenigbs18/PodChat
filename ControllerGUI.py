@@ -3,35 +3,19 @@ import tkinter as tk
 from socket import *
 import ctypes  # An included library with Python install.
 import time
+import os
+import sys
+import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "172.22.8.147"
+serverName = "127.0.0.1"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
 
 #GUI Code
 class PodChatApp(tk.Tk):
-        #
-        # def connectToServer(self):
-        #
-        #     while 1:
-        #         print("Sending hello to server")
-        #         clientSocket.send("hello".encode())
-        #         while 1:
-        #             print("Waiting for response from server")
-        #             SERVER_INFO = clientSocket.recv(1024).decode('ascii')
-        #             if SERVER_INFO.upper() == "WELCOME":
-        #                 print("Enter if statement")
-        #                 print(SERVER_INFO)
-        #                 clientSocket.close()
-        #             else:
-        #                 print("Entering else statement")
-        #                 SEND_BACK = input(SERVER_INFO)
-        #                 clientSocket.send(SEND_BACK.encode())
-        #         clientSocket.close()
-        #         break
 
         def __init__(self, *args, **kwargs):
             tk.Tk.__init__(self, *args, **kwargs)
@@ -59,6 +43,7 @@ class PodChatApp(tk.Tk):
 
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
+            print("Client sent ""login"" message to server")
 
             try:
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
@@ -69,8 +54,6 @@ class PodChatApp(tk.Tk):
                 print("Connection timed out.")
                 self.Mbox('Pod Chat', 'Could not reach server, please try again.', 1)
                 return
-
-
 
             print("username: ", userNameEntry.get())
             print("password: ", pwdEntry.get())
@@ -87,9 +70,51 @@ class PodChatApp(tk.Tk):
                 self.Mbox('Pod Chat', loginValidation, 1)
                 return
 
+        def register_protocol(self, emailEntry, userNameEntry, pwdEntry):
+            clientSocket.send("Register".encode())
+            print("Client sent ""Register"" message to server")
+
+            try:
+                SERVER_INFO = clientSocket.recv(1024).decode('ascii')
+                print("server info:", SERVER_INFO)
+            except ConnectionResetError as e:
+                print(e)
+                print(e.args)
+                print("Connection timed out.")
+                self.Mbox('Pod Chat', 'Could not reach server, please try again.', 1)
+                return
+
+            print("email: ", emailEntry.get())
+            print("username: ", userNameEntry.get())
+            print("password: ", pwdEntry.get())
+
+            register = emailEntry.get() + "," + userNameEntry.get() + "," + pwdEntry.get()
+            clientSocket.send(register.encode())
+            registrationValidation = clientSocket.recv(1024).decode('ascii')
+
+            if "SUCCESS" in registrationValidation.upper():
+                self.show_frame(Login)
+                return
+            else:
+                print(registrationValidation)
+                self.Mbox('Pod Chat', registrationValidation, 1)
+                self.show_frame(Register)#goes back to register frame to retry
+                return
+
+
+        def logout_protocol(self):
+            clientSocket.send("Quit".encode())
+            print("Client: sent Quit message to server.")
+            #Option 1: Log out and reboot-currently not working
+            #os.execv("C:\\Users\\Paulette\\Desktop\\Compsci460\\Project1\\PodChat\\ControllerGUI.py", [''])
+
+            #Option 2: end program
+            self.destroy()
+            exit()
+
+
         def Mbox(self, title, text, style):
             return ctypes.windll.user32.MessageBoxW(0, text, title, style)
-
 
 
 class Login(tk.Frame):
@@ -166,7 +191,7 @@ class Register(tk.Frame):
         self.pwdEntry.grid(row=3, column=1, sticky=W, padx=(0, 50))
 
         #register button
-        self.register = Button(self, text="Register", background='blue', fg='white', command=lambda: controller.show_frame(Login))
+        self.register = Button(self, text="Register", background='blue', fg='white', command=lambda: controller.register_protocol(self.emailEntry, self.userNameEntry, self.pwdEntry))
         self.register.grid(row=4, column=1, padx=(30, 0))
 
 class Menu(tk.Frame):
@@ -178,7 +203,7 @@ class Menu(tk.Frame):
         self.grid()
 
         #Sign out button
-        self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.show_frame(Login))
+        self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message

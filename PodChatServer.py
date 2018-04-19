@@ -15,7 +15,7 @@ import csv
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
 #serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-serverSocket.bind(('172.22.8.147',serverPort))
+serverSocket.bind(('127.0.0.1',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
@@ -91,8 +91,7 @@ def handle_client(connectionSocket, addr):
             continue
         print("INVALID RESPONSE")
         connectionSocket.send("INVALID RESPONSE".encode())
-        
-    
+
     print("Thread Addr " + addr[0] + " has stopped running")
     threadCount = threadCount - 1
     connectionSocket.close()
@@ -144,10 +143,12 @@ def registration(connectionSocket):
     if STATUS == ENUMS.REGISTRATION_REQUIRED:
         print("Entering needs to register code")
         REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
-        OUTPUT_FILE = open("registeredusers.csv", "a")
-        OUTPUT_FILE.write(REGISTRATION_RECORD)
-        OUTPUT_FILE.close()
-        STATUS = ENUMS.SUCCESS
+        with open('registeredusers.csv', 'a') as OUTPUT_FILE:
+        #OUTPUT_FILE = open("registeredusers.csv", "a")
+            OUTPUT_FILE.write(REGISTRATION_RECORD)
+            OUTPUT_FILE.close()
+            STATUS = ENUMS.SUCCESS
+
     if STATUS == ENUMS.SUCCESS:
         print("SUCCESS: REGISTRATION SUCCESSFUL")
         connectionSocket.send("SUCCESS: REGISTRATION SUCCESSFUL".encode())
