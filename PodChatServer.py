@@ -35,9 +35,14 @@ class ENUMS(Enum):
     READ_ERROR = 4
     CONNECTION_ERROR = 5
     REGISTRATION_REQUIRED = 6
-    FAILURE_USERNAME = 7 # specify the username as in use
-    FAILURE_EMAIL = 8 # email in use
-    FAILURE_PASSWORD = 9 # password not valid format
+    # Registration errors, if you edit 7-13, edit for loop in registration code
+    FAILURE_REG = 7 # general registration error
+    FAILURE_REG_EMAIL = 8 # email in use
+    FAILURE_REG_USR = 9 # specify the username as in use
+    FAILURE_REG_PASS = 10 # password not valid format
+    FAILURE_REG_EMAIL_USR = 11 # email and username in use
+    FAILURE_REG_USR_PASS = 12 # username in use and password not valid
+    FAILURE_REG_EMAIL_USR_PASS = 13 # email,password in use, pass not valid
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -107,73 +112,72 @@ def registration(connectionSocket):
     #Open the registeredusers.txt file to check the userID
     try:
         print("Reading from registeredusers.csv")
-        REASON = ""
         STATUS = ENUMS.NULL
         with open('registeredusers.csv', 'r') as USER_FILE:
             READER = csv.reader(USER_FILE)
+            STATUS = ENUMS.FAILURE_REG
             for row in READER:
                 print("Printing current row: "+str(row))
-                if REGINFO[0] not in row:
-                    if REGINFO[0] not in row and REGINFO[1] not in row:
-                        if len(REGINFO[2]) >= 6:
-                            STATUS = ENUMS.REGISTRATION_REQUIRED
-                            print("Registration required")
-                        else:
-                            print("Password length is shorter than 6")
-                            REASON += "Password length is shorter than 6\n"
-                            STATUS = ENUMS.FAILURE_PASSWORD
-                            break
+                if REGINFO[0] in row:
+                    STATUS = ENUMS.FAILURE_REG_EMAIL
+                if REGINFO[1] in row:
+                    if STATUS is ENUMS.FAILURE_REG_EMAIL:
+                        STATUS = ENUMS.FAILURE_REG_EMAIL_USR
                     else:
-                        print("The email you entered is already in use")
-                        REASON += "The email you entered is already in use\n"
-                        STATUS = ENUMS.FAILURE_EMAIL
-                        break
-                else:
-                    print("The username you entered is already in use")
-                    REASON += "The username you entered is already in use\n"
-                    STATUS = ENUMS.FAILURE_USERNAME
-                    break
+                        STATUS = ENUMS.FAILURE_REG_USR
+                if 0 < len(REGINFO[2]) < 6:
+                    if STATUS is ENUMS.FAILURE_REG_EMAIL:
+                        STATUS = ENUMS.FAILURE_REG_EMAIL_PASS
+                    if STATUS is ENUMS.FAILURE_REG_USR:
+                        STATUS = ENUMS.FAILURE_REG_USR_PASS
+                    if STATUS is ENUMS.FAILURE_REG_EMAIL_USR:
+                        STATUS = ENUMS.FAILURE_REG_EMAIL_USR_PASS
+                    if STATUS is ENUMS.FAILURE_REG:
+                        STATUS = ENUMS.FAILURE_REG_PASS
                 print("Done with row")
             print("Done reading from registeredusers.csv")
+            #if STATUS != ENUMS.FAILURE_REG and STATUS != ENUMS.FAILURE_REG_EMAIL and STATUS != ENUMS.FAILURE_REG_USR and STATUS != ENUMS.FAILURE_REG_PASS and STATUS != ENUMS.FAILURE_REG_EMAIL_USR and STATUS != ENUMS.FAILURE_REG_USR_PASS and STATUS != ENUMS.FAILURE_REG_EMAIL_USR_PASS:
+            if STATUS not in [7,8,9,10,11,12,13]:
+                STATUS = ENUMS.REGISTRATION_REQUIRED
     except FileNotFoundError:
         print("File Not Found")
         open("registeredusers.csv", 'w') #create file
         STATUS = ENUMS.READ_ERROR
-    # Return the enum status
     if STATUS == ENUMS.REGISTRATION_REQUIRED:
         print("Entering needs to register code")
         REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
         with open('registeredusers.csv', 'a') as OUTPUT_FILE:
-        #OUTPUT_FILE = open("registeredusers.csv", "a")
             OUTPUT_FILE.write(REGISTRATION_RECORD)
             OUTPUT_FILE.close()
             STATUS = ENUMS.SUCCESS
-
+    # Return the enum status
     if STATUS == ENUMS.SUCCESS:
         print("SUCCESS: REGISTRATION SUCCESSFUL")
         connectionSocket.send("SUCCESS: REGISTRATION SUCCESSFUL".encode())
     elif STATUS == ENUMS.READ_ERROR:
         print("FAILURE: SERVER FILE ERROR")
         connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
-    elif STATUS == ENUMS.FAILURE_EMAIL:
+    elif STATUS == ENUMS.FAILURE_REG_EMAIL:
         print("FAILURE: EMAIL IN USE")
-        SEND = "FAILURE: EMAIL IN USE\n"
-        connectionSocket.send(SEND.encode())
-    elif STATUS == ENUMS.FAILURE_USERNAME:
+        connectionSocket.send("FAILURE: EMAIL IN USE".encode())
+    elif STATUS == ENUMS.FAILURE_REG_USR:
         print("FAILURE: USERNAME IN USE")
-        SEND = "FAILURE: USERNAME IN USE\n"
-        SEND += REASON
-        connectionSocket.send(SEND.encode())
-    elif STATUS == ENUMS.FAILURE_PASSWORD:
+        connectionSocket.send("FAILURE: USERNAME IN USE".encode())
+    elif STATUS == ENUMS.FAILURE_REG_PASS:
         print("FAILURE: INVALID PASSWORD FORMAT")
-        SEND = "FAILURE: INVALID PASSWORD FORMAT\n"
-        SEND += REASON
-        connectionSocket.send(SEND.encode())
-    elif STATUS == ENUMS.FAILURE_GENERIC:
+        connectionSocket.send("FAILURE: INVALID PASSWORD FORMAT".encode())
+    elif STATUS == ENUMS.FAILURE_REG_EMAIL_USR:
+        print("FAILURE: EMAIL AND USERNAME IN USE")
+        connectionSocket.send("FAILURE: EMAIL AND USERNAME IN USE".encode())
+    elif STATUS == ENUMS.FAILURE_REG_USERNAME_PASS:
+        print("FAILURE: USERNAME IN USE AND INVALID PASSWORD FORMAT")
+        connectionSocket.send("FAILURE: USERNAME IN USE AND INVALID PASSWORD FORMAT".encode())
+    elif STATUS == ENUMS.FAILURE_REG_EMAIL_USR_PASS:
+        print("FAILURE: EMAIL AND USERNAME IN USE, AND INVALID PASSWORD FORMAT")
+        connectionSocket.send("FAILURE: USERNAME IN USE".encode())
+    elif STATUS == ENUMS.FAILURE_REG:
         print("FAILURE: REGISTRATION ERROR")
-        SEND = "FAILURE: REGISTRATION ERROR\n"
-        SEND += REASON
-        connectionSocket.send(SEND.encode())
+        connectionSocket.send("FAILURE: REGISTRATION ERROR".encode())
     elif STATUS == ENUMS.NULL:
         print("FAILURE: NULL SERVER RESPONSE")
         connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
