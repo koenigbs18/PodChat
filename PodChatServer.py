@@ -37,12 +37,6 @@ class ENUMS(Enum):
     REGISTRATION_REQUIRED = 6
     # Registration errors, if you edit 7-13, edit for loop in registration code
     FAILURE_REG = 7 # general registration error
-    FAILURE_REG_EMAIL = 8 # email in use
-    FAILURE_REG_USR = 9 # specify the username as in use
-    FAILURE_REG_PASS = 10 # password not valid format
-    FAILURE_REG_EMAIL_USR = 11 # email and username in use
-    FAILURE_REG_USR_PASS = 12 # username in use and password not valid
-    FAILURE_REG_EMAIL_USR_PASS = 13 # email,password in use, pass not valid
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -105,6 +99,7 @@ def registration(connectionSocket):
     print("Entering registration code")
     STATUS = ENUMS.NULL
     REASON = ""
+    REASONPASS = ""
     connectionSocket.send("REGISTRATION".encode())
     #REGISTRATIONINFO: EMAIL[0],USERNAME[1],PASSWORD[2]
     try:
@@ -116,27 +111,28 @@ def registration(connectionSocket):
         print("Reading from registeredusers.csv")
         with open('registeredusers.csv', 'r') as USER_FILE:
             READER = csv.reader(USER_FILE)
-            STATUS = ENUMS.FAILURE_REG
             for row in READER:
                 print("Printing current row: "+str(row))
-                if REGINFO[1] not in row:
-                    if REGINFO[1] not in row and REGINFO[0] not in row:
-                        if len(REGINFO[2]) >= 6:
-                            STATUS = ENUMS.REGISTRATION_REQUIRED
-                        else:
-                            print("Password length is shorter than 6")
-                            REASON += "Password length is shorter than 6\n"
-                            STATUS = ENUMS.FAILURE_REG
-                            break
+                if REGINFO[0] not in row and REGINFO[1] not in row:
+                    if len(REGINFO[2]) < 6:
+                        STATUS = ENUMS.REGISTRATION_REQUIRED
                     else:
+                        print("Password length is shorter than 6")
+                        REASONPASS = "Password length is shorter than 6\n"
+                        STATUS = ENUMS.FAILURE_REG
+                else:
+                    if REGINFO[0] in row:
                         print("The email you entered is already in use")
                         REASON += "The email you entered is already in use\n"
                         STATUS = ENUMS.FAILURE_REG
-                        break
-                else:
-                    print("The username you entered is already in use")
-                    REASON += "The username  you entered is already in use\n"
-                    STATUS = ENUMS.FAILURE_REG
+                    if REGINFO[1] in row:
+                        print("The username you entered is already in use")
+                        REASON += "The username  you entered is already in use\n"
+                        STATUS = ENUMS.FAILURE_REG
+                    if len(REGINFO[2]) < 6:
+                        print("Password length is shorter than 6")
+                        REASONPASS = "Password length is shorter than 6\n"
+                        STATUS = ENUMS.FAILURE_REG
                     break
                 print("Done with row")
             print("Done reading from registeredusers.csv")
@@ -162,6 +158,7 @@ def registration(connectionSocket):
         print("FAILURE: REGISTRATION ERROR")
         SEND = "FAILURE: REGISTRATION ERROR\n"
         SEND += REASON
+        SEND += REASONPASS
         connectionSocket.send(SEND.encode())
     elif STATUS == ENUMS.NULL:
         print("FAILURE: NULL SERVER RESPONSE")
