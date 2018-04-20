@@ -41,14 +41,16 @@ class PodChatApp(tk.Tk):
             frame = self.frames[cont]
             frame.tkraise()
 
+        def showMessage(self, mess):
+
+            frame = self.frames[mess]
+            frame.tkraise()
 
         def sendMessage(self, userName, message):
-
 
             clientSocket.send("Chatroom".decode())
 
             try:
-
 
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
@@ -64,18 +66,9 @@ class PodChatApp(tk.Tk):
             print("username: ", userName.get())
             print("password: ", message.get())
 
-            message = userName.get() + "," + message.get()
-            clientSocket.send(message.encode())
-
-
-
-
-            
-
-
-
-
-
+            SendMessage = userName.get() + "," + message.get()
+            clientSocket.send(sendMessage.encode())
+            showMessage(sendMessage)
 
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
@@ -298,7 +291,7 @@ class CreateChatRoom(tk.Frame):
         self.msgEntry.grid(row=4, column=0, columnspan=2, padx=(75, 0), pady=(5, 0), sticky=W)
 
         #Send button
-        self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(Menu))
+        self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(sendMessage()))
         self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
 
 class ChatRoomBtns(Frame):
