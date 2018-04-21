@@ -9,7 +9,7 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "127.0.0.1"
+serverName = "96.40.228.79"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
@@ -43,23 +43,16 @@ class PodChatApp(tk.Tk):
 
 
         def sendMessage(self, userName, message):
-
-
             clientSocket.send("Chatroom".decode())
-
             try:
-
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
-
             except ConnectionResetError as e:
-
                 print(e)
                 print(e.args)
                 print("connection times out")
                 self.Mbox('pod Chat', 'could not reach server, please try again',1)
                 return
-
             print("username: ", userName.get())
             print("password: ", message.get())
 
@@ -270,7 +263,7 @@ class Menu(tk.Frame):
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
-        self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoomBtns))
+        self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.show_frame(CreateChatRoom))
         self.chatRooms.grid(row=2, column=4)
 
         #Messages Button
@@ -291,10 +284,10 @@ class CreateChatRoom(tk.Frame):
 
         #Back button
         self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
-        self.backButton.grid(row=0, padx=10, pady=10)
+        self.backButton.grid(row=0)
 
-        self.createChatRoomLabel = Label(self, text="Create Chat Room", background='black', fg='white')
-        self.createChatRoomLabel.grid(row=0, column=1, padx=(0, 25), pady=(15, 0))
+        #self.createChatRoomLabel = Label(self, text="Chat Room", background='black', fg='white')
+        #self.createChatRoomLabel.grid(row=0, column=1)
 
         # Room Name: label
        # self.RoomNameLabel = Label(self, text="Room: ", background='black', fg='white')
@@ -305,24 +298,31 @@ class CreateChatRoom(tk.Frame):
        # self.RoomNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
 
         #To: label
-        self.toLabel = Label(self, text="To: ", background='black', fg='white')
-        self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
+        #self.toLabel = Label(self, text="To: ", background='black', fg='white')
+        #self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
 
         # To: entry
-        self.toEntry = Entry(self)
-        self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
+        #self.toEntry = Entry(self)
+        #self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
 
         #message window frame
-        self.msgWindow = Frame(self, width=150, height=200)
-        self.msgWindow.grid(row=3, column=1, pady=(5, 0), columnspan=2, sticky=W)
+        #self.msgWindow = Frame(self, width=300, height=200)
+        #self.msgWindow.grid(row=1)
+
+        self.listbox = Listbox(self, width=50, height=15)
+        self.listbox.insert(END, "hello")
+        self.listbox.grid(padx=(0,5))
 
         #Message entry
-        self.msgEntry = Entry(self, width=24)
-        self.msgEntry.grid(row=4, column=0, columnspan=2, padx=(75, 0), pady=(5, 0), sticky=W)
+        self.msgEntry = Entry(self, width=50)
+        self.msgEntry.grid(row=2)
+
+
+
 
         #Send button
         self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(Menu))
-        self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
+        self.sendButton.grid(row=3, pady=(5, 0))
 
 class ChatRoomBtns(Frame):
 
