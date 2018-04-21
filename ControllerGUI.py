@@ -9,7 +9,7 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "127.0.0.1"
+serverName = "96.40.228.79"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName, serverPort))
@@ -41,35 +41,42 @@ class PodChatApp(tk.Tk):
             frame = self.frames[cont]
             frame.tkraise()
 
+        '''
         def showMessage(self, mess):
-
+    
             frame = self.frames[mess]
             frame.tkraise()
+        '''
 
-        def sendMessage(self, userName, message):
+        def send_message_protocol(self, toEntry, msgEntry):
 
-            clientSocket.send("Chatroom".decode())
+            clientSocket.send("Chatroom".encode())
 
             try:
-
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
-
             except ConnectionResetError as e:
-
                 print(e)
                 print(e.args)
                 print("connection times out")
                 self.Mbox('pod Chat', 'could not reach server, please try again',1)
                 return
 
-            print("username: ", userName.get())
-            print("password: ", message.get())
+            print("to entry: ", toEntry.get())
+            print("message entry: ", msgEntry.get())
 
-            SendMessage = userName.get() + "," + message.get()
+            sendMessage = toEntry.get() + "," + msgEntry.get()
             clientSocket.send(sendMessage.encode())
-            showMessage(sendMessage)
+            #self.show_updated_msgframe(msgEntry.get(), CreateChatRoom)
+            display = CreateChatRoom(None, None)
+            self.display.test()
 
+        ########show updated msg frame method############
+        def show_updated_msgframe(self, msgEntry, cont):
+            frame = self.frames[cont]
+            frame.tkraise()
+
+        ########login protocol method##################################
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
             print("Client sent ""login"" message to server")
@@ -132,15 +139,21 @@ class PodChatApp(tk.Tk):
 
 
         def logout_protocol(self):
-            clientSocket.send("Quit".encode())
-            print("Client: sent Quit message to server.")
-            #Option 1: Log out and reboot-currently not working
-            #os.execv("C:\\Users\\Paulette\\Desktop\\Compsci460\\Project1\\PodChat\\ControllerGUI.py", [''])
+            clientSocket.send("Logout".encode())
+            print("Client: sent Logout message to server.")
+            logoutMsg = clientSocket.recv(1024).decode('ascii')
+            logoutMsg1 = clientSocket.recv(1024).decode('ascii')
 
-            #Option 2: end program
-            self.destroy()
-            exit()
+            print(logoutMsg)
+            print(logoutMsg1)
 
+            if "SUCCESS" in logoutMsg1.upper():
+                self.show_frame(Login)
+                return
+            else:
+                #print(logoutMsg)
+                self.Mbox('Pod Chat', logoutMsg1, 1)
+                return
 
         def Mbox(self, title, text, style):
             return ctypes.windll.user32.MessageBoxW(0, text, title, style)
@@ -248,13 +261,14 @@ class Menu(tk.Frame):
         self.messages.grid(row=3, column=4)
 
         #Friends List Button
-        self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
-        self.friendsList.grid(row=4, column=4)
+        #self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
+        #self.friendsList.grid(row=4, column=4)
 
 class CreateChatRoom(tk.Frame):
 
     #default initial frame code for every frame
     def __init__(self, parent, controller):
+
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
@@ -274,7 +288,7 @@ class CreateChatRoom(tk.Frame):
        # self.RoomNameEntry = Entry(self)
        # self.RoomNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
 
-        To: label
+        #To: label
         self.toLabel = Label(self, text="To: ", background='black', fg='white')
         self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
 
@@ -283,18 +297,24 @@ class CreateChatRoom(tk.Frame):
         self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
 
         #message window frame
-        self.msgWindow = Frame(self, width=150, height=200)
-        self.msgWindow.grid(row=3, column=1, pady=(5, 0), columnspan=2, sticky=W)
+        self.msgWindow = Frame(self, width=50, height=50)
+        self.msgWindow.grid(row=3)
 
         #Message entry
         self.msgEntry = Entry(self, width=24)
         self.msgEntry.grid(row=4, column=0, columnspan=2, padx=(75, 0), pady=(5, 0), sticky=W)
 
         #Send button
-        self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(sendMessage()))
+        #self.sendButton = Button(self, text="Send", background='blue', fg='white', command=lambda: controller.send_message_protocol(self.toEntry,self.msgEntry))
+        self.sendButton = Button(self, text="Send", background='blue', fg='white', command=self.test)
+
         self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
 
-class ChatRoomBtns(Frame):
+    def test(self):
+        print("test")
+
+
+class ChatRoomBtns(tk.Frame):
 
     #default initial frame code for every frame
     def __init__(self, parent, controller):
@@ -320,16 +340,16 @@ class ChatRoomBtns(Frame):
         self.create = Button(self.subBtnFrame, text="Create", background='white', fg='black', command=lambda: controller.show_frame(CreateChatRoom))
         self.create.grid(row=3, column=4)
 
-        self.join = Button(self.subBtnFrame, text="Join", background='white', fg='black')
-        self.join.grid(row=3, column=5)
+        #self.join = Button(self.subBtnFrame, text="Join", background='white', fg='black')
+        #self.join.grid(row=3, column=5)
 
         #Messages Button
         self.messages = Button(self, text="Messages", background='blue', fg='white')
         self.messages.grid(row=5, column=4)
 
         #Friends List Button
-        self.friendsList = Button(self, text="Friends List.", background='blue', fg='white')
-        self.friendsList.grid(row=6, column=4)
+        #self.friendsList = Button(self, text="Friends List.", background='blue', fg='white')
+        #self.friendsList.grid(row=6, column=4)
 
 
 
