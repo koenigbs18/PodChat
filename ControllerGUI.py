@@ -28,7 +28,7 @@ class PodChatApp(tk.Tk):
 
             self.frames = {}
 
-            for F in (Login, Register, Menu, CreateChatRoom, ChatRoomBtns):
+            for F in (Login, Register, Menu, CreateChatRoom, ChatRoomBtns, OfflineMessages):
                 frame = F(container, self)
 
                 self.frames[F] = frame
@@ -48,10 +48,15 @@ class PodChatApp(tk.Tk):
             frame.tkraise()
         '''
 
+<<<<<<< HEAD
         def send_message_protocol(self, toEntry, msgEntry):
 
             clientSocket.send("Chatroom".encode())
 
+=======
+        def sendMessage(self, userName, message):
+            clientSocket.send("Chatroom".decode())
+>>>>>>> master
             try:
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
@@ -61,6 +66,7 @@ class PodChatApp(tk.Tk):
                 print("connection times out")
                 self.Mbox('pod Chat', 'could not reach server, please try again',1)
                 return
+<<<<<<< HEAD
 
             print("to entry: ", toEntry.get())
             print("message entry: ", msgEntry.get())
@@ -77,6 +83,15 @@ class PodChatApp(tk.Tk):
             frame.tkraise()
 
         ########login protocol method##################################
+=======
+            print("username: ", userName.get())
+            print("password: ", message.get())
+
+            message = userName.get() + "," + message.get()
+            clientSocket.send(message.encode())
+
+
+>>>>>>> master
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
             print("Client sent ""login"" message to server")
@@ -236,6 +251,39 @@ class Register(tk.Frame):
         self.register = Button(self, text="Register", background='blue', fg='white', command=lambda: controller.register_protocol(self.emailEntry, self.userNameEntry, self.pwdEntry))
         self.register.grid(row=4, column=1, padx=(30, 0))
 
+class OfflineMessages(tk.Frame):
+
+    #default initial frame code for every frame
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        tk.Frame.configure(self, background='black')
+        self.grid()
+
+        #Sign out button
+        self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
+        self.signOutButton.grid(row=0, pady=(10,0),padx=(245,0), sticky=E)
+
+        # Back button
+        self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
+        self.backButton.grid(row=0, pady=10, sticky=W)
+
+        #header message
+        self.headerMsg = Label(self, text="Offline Messages", background='black', fg="white")
+        self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
+
+        #Messages Button
+        self.messages = Button(self, text="Messages", background='blue', fg='white',command = lambda: controller.show_frame(CreateChatRoom))
+        self.messages.grid()
+
+        #Chat Rooms button
+        #self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoomBtns))
+        #self.chatRooms.grid(row=2, column=4)
+
+        #Friends List Button
+        #self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
+        #self.friendsList.grid(row=4, column=4)
+
+
 class Menu(tk.Frame):
 
     #default initial frame code for every frame
@@ -253,11 +301,11 @@ class Menu(tk.Frame):
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
-        self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoomBtns))
+        self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.show_frame(CreateChatRoom))
         self.chatRooms.grid(row=2, column=4)
 
         #Messages Button
-        self.messages = Button(self, text="Messages", background='blue', fg='white')
+        self.messages = Button(self, text="Messages", background='blue', fg='white', command=lambda: controller.show_frame(OfflineMessages))
         self.messages.grid(row=3, column=4)
 
         #Friends List Button
@@ -275,10 +323,10 @@ class CreateChatRoom(tk.Frame):
 
         #Back button
         self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
-        self.backButton.grid(row=0, padx=10, pady=10)
+        self.backButton.grid(row=0)
 
-        self.createChatRoomLabel = Label(self, text="Create Chat Room", background='black', fg='white')
-        self.createChatRoomLabel.grid(row=0, column=1, padx=(0, 25), pady=(15, 0))
+        #self.createChatRoomLabel = Label(self, text="Chat Room", background='black', fg='white')
+        #self.createChatRoomLabel.grid(row=0, column=1)
 
         # Room Name: label
        # self.RoomNameLabel = Label(self, text="Room: ", background='black', fg='white')
@@ -289,26 +337,48 @@ class CreateChatRoom(tk.Frame):
        # self.RoomNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
 
         #To: label
+<<<<<<< HEAD
         self.toLabel = Label(self, text="To: ", background='black', fg='white')
         self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
+=======
+        #self.toLabel = Label(self, text="To: ", background='black', fg='white')
+        #self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
+>>>>>>> master
 
         # To: entry
-        self.toEntry = Entry(self)
-        self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
+        #self.toEntry = Entry(self)
+        #self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
 
         #message window frame
+<<<<<<< HEAD
         self.msgWindow = Frame(self, width=50, height=50)
         self.msgWindow.grid(row=3)
+=======
+        #self.msgWindow = Frame(self, width=300, height=200)
+        #self.msgWindow.grid(row=1)
+
+        self.listbox = Listbox(self, width=50, height=15)
+        self.listbox.insert(END, "hello")
+        self.listbox.grid(padx=(0,5))
+>>>>>>> master
 
         #Message entry
-        self.msgEntry = Entry(self, width=24)
-        self.msgEntry.grid(row=4, column=0, columnspan=2, padx=(75, 0), pady=(5, 0), sticky=W)
+        self.msgEntry = Entry(self, width=50)
+        self.msgEntry.grid(row=2)
+
+
+
 
         #Send button
+<<<<<<< HEAD
         #self.sendButton = Button(self, text="Send", background='blue', fg='white', command=lambda: controller.send_message_protocol(self.toEntry,self.msgEntry))
         self.sendButton = Button(self, text="Send", background='blue', fg='white', command=self.test)
 
         self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
+=======
+        self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(Menu))
+        self.sendButton.grid(row=3, pady=(5, 0))
+>>>>>>> master
 
     def test(self):
         print("test")
