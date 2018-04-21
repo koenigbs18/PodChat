@@ -47,16 +47,10 @@ class PodChatApp(tk.Tk):
             frame = self.frames[mess]
             frame.tkraise()
         '''
-
-<<<<<<< HEAD
         def send_message_protocol(self, toEntry, msgEntry):
 
             clientSocket.send("Chatroom".encode())
 
-=======
-        def sendMessage(self, userName, message):
-            clientSocket.send("Chatroom".decode())
->>>>>>> master
             try:
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
@@ -66,7 +60,6 @@ class PodChatApp(tk.Tk):
                 print("connection times out")
                 self.Mbox('pod Chat', 'could not reach server, please try again',1)
                 return
-<<<<<<< HEAD
 
             print("to entry: ", toEntry.get())
             print("message entry: ", msgEntry.get())
@@ -82,16 +75,7 @@ class PodChatApp(tk.Tk):
             frame = self.frames[cont]
             frame.tkraise()
 
-        ########login protocol method##################################
-=======
-            print("username: ", userName.get())
-            print("password: ", message.get())
 
-            message = userName.get() + "," + message.get()
-            clientSocket.send(message.encode())
-
-
->>>>>>> master
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
             print("Client sent ""login"" message to server")
@@ -337,30 +321,29 @@ class CreateChatRoom(tk.Frame):
        # self.RoomNameEntry.grid(row=1, column=1, sticky=W, padx=(0, 50), pady=(25, 0))
 
         #To: label
-<<<<<<< HEAD
+
         self.toLabel = Label(self, text="To: ", background='black', fg='white')
         self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
-=======
+
         #self.toLabel = Label(self, text="To: ", background='black', fg='white')
         #self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
->>>>>>> master
+
 
         # To: entry
         #self.toEntry = Entry(self)
         #self.toEntry.grid(row=2, column=1, sticky=W, padx=(0, 50), pady=(5, 0))
 
         #message window frame
-<<<<<<< HEAD
+
         self.msgWindow = Frame(self, width=50, height=50)
         self.msgWindow.grid(row=3)
-=======
+
         #self.msgWindow = Frame(self, width=300, height=200)
         #self.msgWindow.grid(row=1)
 
         self.listbox = Listbox(self, width=50, height=15)
         self.listbox.insert(END, "hello")
         self.listbox.grid(padx=(0,5))
->>>>>>> master
 
         #Message entry
         self.msgEntry = Entry(self, width=50)
@@ -370,15 +353,14 @@ class CreateChatRoom(tk.Frame):
 
 
         #Send button
-<<<<<<< HEAD
+
         #self.sendButton = Button(self, text="Send", background='blue', fg='white', command=lambda: controller.send_message_protocol(self.toEntry,self.msgEntry))
         self.sendButton = Button(self, text="Send", background='blue', fg='white', command=self.test)
 
         self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
-=======
+
         self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(Menu))
         self.sendButton.grid(row=3, pady=(5, 0))
->>>>>>> master
 
     def test(self):
         print("test")
