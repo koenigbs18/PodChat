@@ -15,10 +15,11 @@ import csv
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
 #serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-serverSocket.bind(('127.0.0.1',serverPort))
+serverSocket.bind(('192.168.1.107',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
+offlineMessages = []
 currentMessage = ""
 sendingMessage = False
 
@@ -54,6 +55,7 @@ def handle_client(connectionSocket, addr):
             print(err.args)
             print("User: " + str(threadCount-1) + " did not respond in time.")
             break
+        print("Server Message: " + message)
         if(loggedIn == False):
             # login/register options, initial login
             if(message.upper() == "LOGIN"):
@@ -62,10 +64,11 @@ def handle_client(connectionSocket, addr):
                 returnMessage = login(connectionSocket).split(',')
                 LOGIN_STATUS = returnMessage[0]
                 USERNAME = returnMessage[1]
-                if(LOGIN_STATUS == ENUMS.SUCCESS):
+                if(LOGIN_STATUS == str(ENUMS.SUCCESS)):
+                    print(USERNAME + " has logged in.")
+                    connectionSocket.send((USERNAME + " has logged in.").encode())
                     loggedIn = True
-                    returnMessage = returnMessage.split(',')
-                    
+
                 elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
                     break
                 continue
@@ -80,6 +83,12 @@ def handle_client(connectionSocket, addr):
                 # connect user to chatroom
                 chatroom(connectionSocket)
                 continue
+            if(message.upper() == "LOGOUT"):
+                print("LOGOUT SUCCESSFUL")
+                connectionSocket.send("LOGOUT SUCCESSFUL".encode())
+                loggedIn = False
+                continue
+
         # all user options
         if(message.upper() == "HELLO WORLD"):
             connectionSocket.send(("connection from " + addr[0]).encode())
@@ -88,8 +97,8 @@ def handle_client(connectionSocket, addr):
             connectionSocket.send("goodbye".encode())
             running = False
             continue
-        print("INVALID RESPONSE")
-        connectionSocket.send("INVALID RESPONSE".encode())
+        print("INVALID RESPONSE: " + message)
+        connectionSocket.send(("INVALID RESPONSE" + message).encode())
 
     print("Thread Addr " + addr[0] + " has stopped running")
     threadCount = threadCount - 1
@@ -114,7 +123,7 @@ def registration(connectionSocket):
             for row in READER:
                 print("Printing current row: "+str(row))
                 if REGINFO[0] not in row and REGINFO[1] not in row:
-                    if len(REGINFO[2]) < 6:
+                    if len(REGINFO[2]) >= 6:
                         STATUS = ENUMS.REGISTRATION_REQUIRED
                     else:
                         print("Password length is shorter than 6")
@@ -186,6 +195,10 @@ def login(connectionSocket):
         connectionSocket.send("FAILURE: INCORRECT FORMAT".encode())
         return ENUMS.FAILURE_GENERIC
     #Open the registeredusers.txt file to check the username & password
+    if(len(LOGININFO) != 2):
+        print("LOGIN INFO INVALID")
+        connectionSocket.send("FAILURE: INVALID LOGIN PARAMETERS".encode())
+        return (str(STATUS) + "," + "")
     try:
          print("Reading from registeredusers.txt")
          with open('registeredusers.csv', 'r') as USER_FILE:
