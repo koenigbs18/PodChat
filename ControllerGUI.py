@@ -49,7 +49,6 @@ class PodChatApp(tk.Tk):
 
             try:
 
-
                 SERVER_INFO = clientSocket.recv(1024).decode('ascii')
                 print("server info: ", SERVER_INFO)
 
@@ -231,7 +230,7 @@ class OfflineMessages(tk.Frame):
 
         #Sign out button
         self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
-        self.signOutButton.grid(row=0, pady=10, sticky=E)
+        self.signOutButton.grid(row=0, pady=(10,0),padx=(245,0), sticky=E)
 
         # Back button
         self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
@@ -242,8 +241,8 @@ class OfflineMessages(tk.Frame):
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Messages Button
-        self.messages = Button(self, text="Messages", background='blue', fg='white')
-        self.messages.grid(row=3, column=4)
+        self.messages = Button(self, text="Messages", background='blue', fg='white',command = lambda: controller.show_frame(CreateChatRoom))
+        self.messages.grid()
 
         #Chat Rooms button
         #self.chatRooms = Button(self, text="Chat Rooms", background='blue', fg='white', command=lambda: controller.show_frame(ChatRoomBtns))
