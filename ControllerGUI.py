@@ -114,15 +114,8 @@ class PodChatApp(tk.Tk):
             print("Client: sent Logout message to server.")
             logoutMsg1 = clientSocket.recv(1024).decode('ascii')
             print(logoutMsg1)
-
-            if "SUCCESS" in logoutMsg1.upper():
-                username=None
-                self.show_frame(Login)
-                return
-            else:
-                #print(logoutMsg)
-                self.Mbox('Pod Chat', logoutMsg1, 1)
-                return
+            username=None
+            self.show_frame(Login)
 
         def chatroom_connection_protocol(self):
             global chatRoomActive
