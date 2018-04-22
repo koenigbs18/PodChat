@@ -9,7 +9,7 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "96.40.228.79"
+serverName = "127.0.0.1"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 chatRoomActive=False
