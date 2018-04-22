@@ -9,16 +9,25 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "96.40.228.79"
+serverName = "127.0.0.1"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
-clientSocket.connect((serverName, serverPort))
+chatRoomActive=False
+try:
+    clientSocket.connect((serverName, serverPort))
+except TimeoutError as e:
+    print(e)
+    print(e.args)
+    print("Connection timed out.")
+    ctypes.windll.user32.MessageBoxW(0,'Could not reach server, please try again.','Pod Chat', 1)
+    sys.exit(0)
 
 #GUI Code
 class PodChatApp(tk.Tk):
 
         def __init__(self, *args, **kwargs):
             tk.Tk.__init__(self, *args, **kwargs)
+
             container = tk.Frame(self)
 
             container.pack(side="top", fill="both", expand=True)
@@ -46,7 +55,7 @@ class PodChatApp(tk.Tk):
     
             frame = self.frames[mess]
             frame.tkraise()
-        '''
+        
         def send_message_protocol(self, toEntry, msgEntry):
 
             clientSocket.send("Chatroom".encode())
@@ -74,28 +83,21 @@ class PodChatApp(tk.Tk):
         def show_updated_msgframe(self, msgEntry, cont):
             frame = self.frames[cont]
             frame.tkraise()
-
+        '''
 
         def login_protocol(self, userNameEntry, pwdEntry):
             clientSocket.send("Login".encode())
             print("Client sent ""login"" message to server")
+            SERVER_INFO = clientSocket.recv(1024).decode('ascii')
+            print("server info:" + str(SERVER_INFO))
 
-            try:
-                SERVER_INFO = clientSocket.recv(1024).decode('ascii')
-                print("server info:", SERVER_INFO)
-            except ConnectionResetError as e:
-                print(e)
-                print(e.args)
-                print("Connection timed out.")
-                self.Mbox('Pod Chat', 'Could not reach server, please try again.', 1)
-                return
-
-            print("username: ", userNameEntry.get())
-            print("password: ", pwdEntry.get())
+            print("username: " + str(userNameEntry.get()))
+            print("password: " + str(pwdEntry.get()))
 
             login = userNameEntry.get() + "," + pwdEntry.get()
             clientSocket.send(login.encode())
             loginValidation = clientSocket.recv(1024).decode('ascii')
+            print(loginValidation)
 
             if "SUCCESS" in loginValidation.upper():
                 self.show_frame(Menu)
@@ -140,10 +142,7 @@ class PodChatApp(tk.Tk):
         def logout_protocol(self):
             clientSocket.send("Logout".encode())
             print("Client: sent Logout message to server.")
-            logoutMsg = clientSocket.recv(1024).decode('ascii')
             logoutMsg1 = clientSocket.recv(1024).decode('ascii')
-
-            print(logoutMsg)
             print(logoutMsg1)
 
             if "SUCCESS" in logoutMsg1.upper():
@@ -153,6 +152,25 @@ class PodChatApp(tk.Tk):
                 #print(logoutMsg)
                 self.Mbox('Pod Chat', logoutMsg1, 1)
                 return
+
+        def chatroom_connection_protocol(self):
+            global chatRoomActive
+            chatRoomActive=True
+
+            clientSocket.send("Chatroom".encode())
+            connectMsg = clientSocket.recv(1024).decode('ascii')
+            connectMsg2 = clientSocket.recv(1024).decode('ascii')
+            print(connectMsg2)
+            self.show_frame(CreateChatRoom)
+
+        def quit_chatroom(self):
+            global chatRoomActive
+            chatRoomActive=False
+
+            clientSocket.send("Qtchatroom".encode())
+            disconnectMsg = clientSocket.recv(1024).decode('ascii')
+            print(disconnectMsg)
+            self.show_frame(Menu)
 
         def Mbox(self, title, text, style):
             return ctypes.windll.user32.MessageBoxW(0, text, title, style)
@@ -285,7 +303,7 @@ class Menu(tk.Frame):
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
-        self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.show_frame(CreateChatRoom))
+        self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.chatroom_connection_protocol())
         self.chatRooms.grid(row=2, column=4)
 
         #Messages Button
@@ -306,7 +324,7 @@ class CreateChatRoom(tk.Frame):
         self.grid()
 
         #Back button
-        self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.show_frame(Menu))
+        self.backButton = Button(self, text="Back", background='red', fg='white', command=lambda: controller.quit_chatroom())
         self.backButton.grid(row=0)
 
         #self.createChatRoomLabel = Label(self, text="Chat Room", background='black', fg='white')
@@ -322,8 +340,8 @@ class CreateChatRoom(tk.Frame):
 
         #To: label
 
-        self.toLabel = Label(self, text="To: ", background='black', fg='white')
-        self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
+        #self.toLabel = Label(self, text="To: ", background='black', fg='white')
+        #self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
 
         #self.toLabel = Label(self, text="To: ", background='black', fg='white')
         #self.toLabel.grid(row=2, sticky=E, padx=(50, 0), pady=(5, 0))
@@ -335,35 +353,29 @@ class CreateChatRoom(tk.Frame):
 
         #message window frame
 
-        self.msgWindow = Frame(self, width=50, height=50)
-        self.msgWindow.grid(row=3)
+        #self.msgWindow = Frame(self, width=50, height=50)
+        #self.msgWindow.grid(row=3)
 
         #self.msgWindow = Frame(self, width=300, height=200)
         #self.msgWindow.grid(row=1)
 
         self.listbox = Listbox(self, width=50, height=15)
         self.listbox.insert(END, "hello")
-        self.listbox.grid(padx=(0,5))
+        self.listbox.grid(pady=(0,5))
 
         #Message entry
         self.msgEntry = Entry(self, width=50)
         self.msgEntry.grid(row=2)
 
-
-
-
         #Send button
-
-        #self.sendButton = Button(self, text="Send", background='blue', fg='white', command=lambda: controller.send_message_protocol(self.toEntry,self.msgEntry))
-        self.sendButton = Button(self, text="Send", background='blue', fg='white', command=self.test)
-
+        self.sendButton = Button(self, text="Send", background='blue', fg='white', command=self.sendMessage(self.msgEntry))
         self.sendButton.grid(row=5, column=1, pady=(5, 0), padx=(75, 0))
 
-        self.sendButton = Button(self, text="Send", background='blue', fg='white',command=lambda: controller.show_frame(Menu))
-        self.sendButton.grid(row=3, pady=(5, 0))
+        #To do-set up receiving thread as soon as the chatroom is entered.
 
-    def test(self):
-        print("test")
+    def sendMessage(self, msgEntry):
+        self.listbox.insert(END, msgEntry.get())
+        clientSocket.send(msgEntry.get().encode())
 
 
 class ChatRoomBtns(tk.Frame):
@@ -407,7 +419,6 @@ class ChatRoomBtns(tk.Frame):
 
 app = PodChatApp()
 
-
 app.title("Pod Chat")
 
 #icon at top left
@@ -425,6 +436,23 @@ x = (screenWidth/2) - (width/2)
 y = (screenHeight/2) - (height/2)
 
 app.geometry('%dx%d+%d+%d' % (width, height, 200, 200))
+
+
+def on_closing():
+    if chatRoomActive == False:
+        clientSocket.send("Quit".encode())
+        recmsg = clientSocket.recv(1024).decode()
+    elif chatRoomActive == True:
+        clientSocket.send("Qtchatroom".encode())
+        recmsg = clientSocket.recv(1024).decode()
+        clientSocket.send("Quit".encode())
+
+    try:
+        app.destroy()
+    except:
+        pass
+
+app.protocol("WM_DELETE_WINDOW", on_closing)
 
 app.mainloop()
 
