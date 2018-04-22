@@ -50,7 +50,7 @@ def handle_client(connectionSocket, addr):
         # receive message
         try:
             message = connectionSocket.recv(1024).decode('ascii') # wait for a message
-        except ConnectionResetError as err:
+        except (ConnectionResetError, TimeoutError) as err:
             print(err)
             print(err.args)
             print("User: " + str(threadCount-1) + " did not respond in time.")
@@ -67,7 +67,6 @@ def handle_client(connectionSocket, addr):
                 USERNAME = returnMessage[1]
                 if(LOGIN_STATUS == str(ENUMS.SUCCESS)):
                     print(USERNAME + " has logged in.")
-                    connectionSocket.send((USERNAME + " has logged in.").encode())
                     loggedIn = True
 
                 elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
@@ -83,7 +82,7 @@ def handle_client(connectionSocket, addr):
             # options after login
             if(message.upper() == "CHATROOM"):
                 # connect user to chatroom
-                chatroom(connectionSocket, USERNAME)
+                chatroom(connectionSocket)
                 continue
             if(message.upper() == "LOGOUT"):
                 print("LOGOUT SUCCESSFUL")
@@ -185,7 +184,7 @@ def login(connectionSocket):
     #LOGININFO: USERNAME[0],PASSWORD[1]
     try:
         LOGININFO = connectionSocket.recv(1024).decode('ascii')
-    except ConnectionResetError as err:
+    except (ConnectionResetError, TimeoutError) as err:
         print(err)
         print(err.args)
         return ENUMS.CONNECTION_ERROR
@@ -208,6 +207,8 @@ def login(connectionSocket):
             STATUS = ENUMS.FAILURE_INCORRECT
             READER = csv.reader(USER_FILE)
             for row in READER:
+                if(len(row) < 2):
+                    continue
                 if LOGININFO[0] == str(row[1]) and LOGININFO[1] == str(row[2]):
                     STATUS = ENUMS.SUCCESS
                     break
@@ -234,23 +235,17 @@ def login(connectionSocket):
     return (str(STATUS) + "," + "")
         
 #chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
-def chatroom(connectionSocket, USERNAME):
-    print(USERNAME + " has connected to the chatroom.")
-    connectionSocket.send("Connected to chatroom, please send a message or type 'QUIT CHATROOM' to quit.".encode())
+def chatroom(connectionSocket):
     global currentMessage
     global sendingMessage
     global users
     index = len(users) # save the index of this user
     users.append(True)
-    start_new_thread(sendChatroomMessage, (connectionSocket, index, USERNAME))
+    start_new_thread(sendChatroomMessage, (connectionSocket, index))
     start_new_thread(receiveChatroomMessage, (connectionSocket, index))
     while users[index] == True:
         time.sleep(.05)
-    try: 
-        connectionSocket.send("exiting chatroom".encode())
-    except ConnectionResetError:
-        print("Lost connection to user " + str(index))
-    users.pop()
+
     print("\nuser " + str(index) + " has exited the chatroom.")
     
 def receiveChatroomMessage(connectionSocket, index):
@@ -260,9 +255,11 @@ def receiveChatroomMessage(connectionSocket, index):
     while users[index] == True:
         try:
             message = connectionSocket.recv(1024).decode('ascii') # wait for a message
-        except ConnectionResetError:
+        except (ConnectionResetError, TimeoutError) as err:
+            print(err)
+            print(err.args)
             print("\nUser: " + str(index) + " did not respond in time.")
-            users[index] == True
+            users[index] == False
             break
         if(message.upper() == "QTCHATROOM"):
             print("\nQuitting chatroom")
@@ -273,11 +270,14 @@ def receiveChatroomMessage(connectionSocket, index):
             currentMessage = message
     try: 
         connectionSocket.send("exiting chatroom".encode())
-    except ConnectionResetError:
+    except (ConnectionResetError, TimeoutError) as err:
+        print(err)
+        print(err.args)
         print("Lost connection to user " + str(index))
-        users[index] == True
+        users[index] == False
     print("\nexiting receiveChatroom thread")
-def sendChatroomMessage(connectionSocket, index, USERNAME):
+
+def sendChatroomMessage(connectionSocket, index):
     global currentMessage
     global sendingMessage
     global users
@@ -285,10 +285,12 @@ def sendChatroomMessage(connectionSocket, index, USERNAME):
         if(sendingMessage):
             print("\nattempting to send message to client")
             try:
-                connectionSocket.send((USERNAME + ": " + currentMessage).encode())
-            except ConnectionResetError:
+                connectionSocket.send(currentMessage.encode())
+            except (ConnectionResetError, TimeoutError) as err:
+                print(err)
+                print(err.args)
                 print("Lost connection to user " + str(index))
-                users[index] == True
+                users[index] == False
                 break
             sendingMessage = False
     print("\nexiting sendChatroom thread")
