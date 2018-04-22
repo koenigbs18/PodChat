@@ -15,7 +15,7 @@ import csv
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
 #serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-serverSocket.bind(('127.0.0.1',serverPort))
+serverSocket.bind(('192.168.1.107',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
@@ -38,7 +38,6 @@ class ENUMS(Enum):
     REGISTRATION_REQUIRED = 6
     # Registration errors, if you edit 7-13, edit for loop in registration code
     FAILURE_REG = 7 # general registration error
-    FAILURE_EMPTY_INPUT = 8 # throw error for empty input boxes
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -117,45 +116,40 @@ def registration(connectionSocket):
         REGINFO = connectionSocket.recv(1024).decode('ascii').split(",")
     except ValueError:
         return ENUMS.CONNECTION_ERROR
-    if REGINFO[0] != '' and REGINFO[1] != '' and REGINFO[2] != '':
-        #Open the registeredusers.txt file to check the userID
-        try:
-            print("Reading from registeredusers.csv")
-            with open('registeredusers.csv', 'r') as USER_FILE:
-                READER = csv.reader(USER_FILE)
-                for row in READER:
-                    print("Printing current row: "+str(row))
-                    if REGINFO[0] not in row and REGINFO[1] not in row:
-                        if len(REGINFO[2]) >= 6:
-                            STATUS = ENUMS.REGISTRATION_REQUIRED
-                        else:
-                            print("Password length is shorter than 6")
-                            REASONPASS = "Password length is shorter than 6\n"
-                            STATUS = ENUMS.FAILURE_REG
+    #Open the registeredusers.txt file to check the userID
+    try:
+        print("Reading from registeredusers.csv")
+        with open('registeredusers.csv', 'r') as USER_FILE:
+            READER = csv.reader(USER_FILE)
+            for row in READER:
+                print("Printing current row: "+str(row))
+                if REGINFO[0] not in row and REGINFO[1] not in row:
+                    if len(REGINFO[2]) >= 6:
+                        STATUS = ENUMS.REGISTRATION_REQUIRED
                     else:
-                        if REGINFO[0] in row:
-                            print("The email you entered is already in use")
-                            REASON += "The email you entered is already in use\n"
-                            STATUS = ENUMS.FAILURE_REG
-                        if REGINFO[1] in row:
-                            print("The username you entered is already in use")
-                            REASON += "The username  you entered is already in use\n"
-                            STATUS = ENUMS.FAILURE_REG
-                        if len(REGINFO[2]) < 6:
-                            print("Password length is shorter than 6")
-                            REASONPASS = "Password length is shorter than 6\n"
-                            STATUS = ENUMS.FAILURE_REG
-                        break
-                    print("Done with row")
-                print("Done reading from registeredusers.csv")
-        except FileNotFoundError:
-            print("File Not Found")
-            open("registeredusers.csv", 'w') #create file
-            STATUS = ENUMS.READ_ERROR
-    else:
-        print("REGISTRATION INFO INVALID")
-        connectionSocket.send("FAILURE: INVALID REGISTRATION PARAMETERS".encode())
-        return STATUS
+                        print("Password length is shorter than 6")
+                        REASONPASS = "Password length is shorter than 6\n"
+                        STATUS = ENUMS.FAILURE_REG
+                else:
+                    if REGINFO[0] in row:
+                        print("The email you entered is already in use")
+                        REASON += "The email you entered is already in use\n"
+                        STATUS = ENUMS.FAILURE_REG
+                    if REGINFO[1] in row:
+                        print("The username you entered is already in use")
+                        REASON += "The username  you entered is already in use\n"
+                        STATUS = ENUMS.FAILURE_REG
+                    if len(REGINFO[2]) < 6:
+                        print("Password length is shorter than 6")
+                        REASONPASS = "Password length is shorter than 6\n"
+                        STATUS = ENUMS.FAILURE_REG
+                    break
+                print("Done with row")
+            print("Done reading from registeredusers.csv")
+    except FileNotFoundError:
+        print("File Not Found")
+        open("registeredusers.csv", 'w') #create file
+        STATUS = ENUMS.READ_ERROR
     if STATUS == ENUMS.REGISTRATION_REQUIRED:
         print("Entering needs to register code")
         REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
