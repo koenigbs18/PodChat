@@ -10,7 +10,7 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "127.0.0.1"
+serverName = "96.40.228.79"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 chatRoomActive=False
@@ -52,41 +52,6 @@ class PodChatApp(tk.Tk):
         def show_frame(self, cont):
             frame = self.frames[cont]
             frame.tkraise()
-
-        '''
-        def showMessage(self, mess):
-    
-            frame = self.frames[mess]
-            frame.tkraise()
-        
-        def send_message_protocol(self, toEntry, msgEntry):
-
-            clientSocket.send("Chatroom".encode())
-
-            try:
-                SERVER_INFO = clientSocket.recv(1024).decode('ascii')
-                print("server info: ", SERVER_INFO)
-            except ConnectionResetError as e:
-                print(e)
-                print(e.args)
-                print("connection times out")
-                self.Mbox('pod Chat', 'could not reach server, please try again',1)
-                return
-
-            print("to entry: ", toEntry.get())
-            print("message entry: ", msgEntry.get())
-
-            sendMessage = toEntry.get() + "," + msgEntry.get()
-            clientSocket.send(sendMessage.encode())
-            #self.show_updated_msgframe(msgEntry.get(), CreateChatRoom)
-            display = CreateChatRoom(None, None)
-            self.display.test()
-
-        ########show updated msg frame method############
-        def show_updated_msgframe(self, msgEntry, cont):
-            frame = self.frames[cont]
-            frame.tkraise()
-        '''
 
         def login_protocol(self, userNameEntry, pwdEntry):
             global username
