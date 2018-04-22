@@ -15,7 +15,7 @@ import csv
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
 #serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-serverSocket.bind(('192.168.1.107',serverPort))
+serverSocket.bind(('127.0.0.1',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
@@ -38,6 +38,7 @@ class ENUMS(Enum):
     REGISTRATION_REQUIRED = 6
     # Registration errors, if you edit 7-13, edit for loop in registration code
     FAILURE_REG = 7 # general registration error
+    FAILURE_EMPTY_INPUT = 8 # throw error for empty input boxes
 
 def handle_client(connectionSocket, addr):
     global threadCount
@@ -50,7 +51,7 @@ def handle_client(connectionSocket, addr):
         # receive message
         try:
             message = connectionSocket.recv(1024).decode('ascii') # wait for a message
-        except ConnectionResetError as err:
+        except (ConnectionResetError, TimeoutError) as err:
             print(err)
             print(err.args)
             print("User: " + str(threadCount-1) + " did not respond in time.")
@@ -67,7 +68,6 @@ def handle_client(connectionSocket, addr):
                 USERNAME = returnMessage[1]
                 if(LOGIN_STATUS == str(ENUMS.SUCCESS)):
                     print(USERNAME + " has logged in.")
-                    connectionSocket.send((USERNAME + " has logged in.").encode())
                     loggedIn = True
 
                 elif(LOGIN_STATUS == ENUMS.CONNECTION_ERROR):
@@ -83,7 +83,7 @@ def handle_client(connectionSocket, addr):
             # options after login
             if(message.upper() == "CHATROOM"):
                 # connect user to chatroom
-                chatroom(connectionSocket, USERNAME)
+                chatroom(connectionSocket)
                 continue
             if(message.upper() == "LOGOUT"):
                 print("LOGOUT SUCCESSFUL")
@@ -117,40 +117,45 @@ def registration(connectionSocket):
         REGINFO = connectionSocket.recv(1024).decode('ascii').split(",")
     except ValueError:
         return ENUMS.CONNECTION_ERROR
-    #Open the registeredusers.txt file to check the userID
-    try:
-        print("Reading from registeredusers.csv")
-        with open('registeredusers.csv', 'r') as USER_FILE:
-            READER = csv.reader(USER_FILE)
-            for row in READER:
-                print("Printing current row: "+str(row))
-                if REGINFO[0] not in row and REGINFO[1] not in row:
-                    if len(REGINFO[2]) >= 6:
-                        STATUS = ENUMS.REGISTRATION_REQUIRED
+    if REGINFO[0] != '' and REGINFO[1] != '' and REGINFO[2] != '':
+        #Open the registeredusers.txt file to check the userID
+        try:
+            print("Reading from registeredusers.csv")
+            with open('registeredusers.csv', 'r') as USER_FILE:
+                READER = csv.reader(USER_FILE)
+                for row in READER:
+                    print("Printing current row: "+str(row))
+                    if REGINFO[0] not in row and REGINFO[1] not in row:
+                        if len(REGINFO[2]) >= 6:
+                            STATUS = ENUMS.REGISTRATION_REQUIRED
+                        else:
+                            print("Password length is shorter than 6")
+                            REASONPASS = "Password length is shorter than 6\n"
+                            STATUS = ENUMS.FAILURE_REG
                     else:
-                        print("Password length is shorter than 6")
-                        REASONPASS = "Password length is shorter than 6\n"
-                        STATUS = ENUMS.FAILURE_REG
-                else:
-                    if REGINFO[0] in row:
-                        print("The email you entered is already in use")
-                        REASON += "The email you entered is already in use\n"
-                        STATUS = ENUMS.FAILURE_REG
-                    if REGINFO[1] in row:
-                        print("The username you entered is already in use")
-                        REASON += "The username  you entered is already in use\n"
-                        STATUS = ENUMS.FAILURE_REG
-                    if len(REGINFO[2]) < 6:
-                        print("Password length is shorter than 6")
-                        REASONPASS = "Password length is shorter than 6\n"
-                        STATUS = ENUMS.FAILURE_REG
-                    break
-                print("Done with row")
-            print("Done reading from registeredusers.csv")
-    except FileNotFoundError:
-        print("File Not Found")
-        open("registeredusers.csv", 'w') #create file
-        STATUS = ENUMS.READ_ERROR
+                        if REGINFO[0] in row:
+                            print("The email you entered is already in use")
+                            REASON += "The email you entered is already in use\n"
+                            STATUS = ENUMS.FAILURE_REG
+                        if REGINFO[1] in row:
+                            print("The username you entered is already in use")
+                            REASON += "The username  you entered is already in use\n"
+                            STATUS = ENUMS.FAILURE_REG
+                        if len(REGINFO[2]) < 6:
+                            print("Password length is shorter than 6")
+                            REASONPASS = "Password length is shorter than 6\n"
+                            STATUS = ENUMS.FAILURE_REG
+                        break
+                    print("Done with row")
+                print("Done reading from registeredusers.csv")
+        except FileNotFoundError:
+            print("File Not Found")
+            open("registeredusers.csv", 'w') #create file
+            STATUS = ENUMS.READ_ERROR
+    else:
+        print("REGISTRATION INFO INVALID")
+        connectionSocket.send("FAILURE: INVALID REGISTRATION PARAMETERS".encode())
+        return STATUS
     if STATUS == ENUMS.REGISTRATION_REQUIRED:
         print("Entering needs to register code")
         REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
@@ -185,7 +190,7 @@ def login(connectionSocket):
     #LOGININFO: USERNAME[0],PASSWORD[1]
     try:
         LOGININFO = connectionSocket.recv(1024).decode('ascii')
-    except ConnectionResetError as err:
+    except (ConnectionResetError, TimeoutError) as err:
         print(err)
         print(err.args)
         return ENUMS.CONNECTION_ERROR
@@ -208,6 +213,8 @@ def login(connectionSocket):
             STATUS = ENUMS.FAILURE_INCORRECT
             READER = csv.reader(USER_FILE)
             for row in READER:
+                if(len(row) < 2):
+                    continue
                 if LOGININFO[0] == str(row[1]) and LOGININFO[1] == str(row[2]):
                     STATUS = ENUMS.SUCCESS
                     break
@@ -234,23 +241,17 @@ def login(connectionSocket):
     return (str(STATUS) + "," + "")
         
 #chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
-def chatroom(connectionSocket, USERNAME):
-    print(USERNAME + " has connected to the chatroom.")
-    connectionSocket.send("Connected to chatroom, please send a message or type 'QUIT CHATROOM' to quit.".encode())
+def chatroom(connectionSocket):
     global currentMessage
     global sendingMessage
     global users
     index = len(users) # save the index of this user
     users.append(True)
-    start_new_thread(sendChatroomMessage, (connectionSocket, index, USERNAME))
+    start_new_thread(sendChatroomMessage, (connectionSocket, index))
     start_new_thread(receiveChatroomMessage, (connectionSocket, index))
     while users[index] == True:
         time.sleep(.05)
-    try: 
-        connectionSocket.send("exiting chatroom".encode())
-    except ConnectionResetError:
-        print("Lost connection to user " + str(index))
-    users.pop()
+
     print("\nuser " + str(index) + " has exited the chatroom.")
     
 def receiveChatroomMessage(connectionSocket, index):
@@ -260,9 +261,11 @@ def receiveChatroomMessage(connectionSocket, index):
     while users[index] == True:
         try:
             message = connectionSocket.recv(1024).decode('ascii') # wait for a message
-        except ConnectionResetError:
+        except (ConnectionResetError, TimeoutError) as err:
+            print(err)
+            print(err.args)
             print("\nUser: " + str(index) + " did not respond in time.")
-            users[index] == True
+            users[index] == False
             break
         if(message.upper() == "QTCHATROOM"):
             print("\nQuitting chatroom")
@@ -273,11 +276,14 @@ def receiveChatroomMessage(connectionSocket, index):
             currentMessage = message
     try: 
         connectionSocket.send("exiting chatroom".encode())
-    except ConnectionResetError:
+    except (ConnectionResetError, TimeoutError) as err:
+        print(err)
+        print(err.args)
         print("Lost connection to user " + str(index))
-        users[index] == True
+        users[index] == False
     print("\nexiting receiveChatroom thread")
-def sendChatroomMessage(connectionSocket, index, USERNAME):
+
+def sendChatroomMessage(connectionSocket, index):
     global currentMessage
     global sendingMessage
     global users
@@ -285,10 +291,12 @@ def sendChatroomMessage(connectionSocket, index, USERNAME):
         if(sendingMessage):
             print("\nattempting to send message to client")
             try:
-                connectionSocket.send((USERNAME + ": " + currentMessage).encode())
-            except ConnectionResetError:
+                connectionSocket.send(currentMessage.encode())
+            except (ConnectionResetError, TimeoutError) as err:
+                print(err)
+                print(err.args)
                 print("Lost connection to user " + str(index))
-                users[index] == True
+                users[index] == False
                 break
             sendingMessage = False
     print("\nexiting sendChatroom thread")
