@@ -207,7 +207,7 @@ def login(connectionSocket):
             STATUS = ENUMS.FAILURE_INCORRECT
             READER = csv.reader(USER_FILE)
             for row in READER:
-                if(len(row) < 2):
+                if(len(row) < 3):
                     continue
                 if LOGININFO[0] == str(row[1]) and LOGININFO[1] == str(row[2]):
                     STATUS = ENUMS.SUCCESS
@@ -268,6 +268,7 @@ def receiveChatroomMessage(connectionSocket, index):
         if(len(message) > 0):
             sendingMessage = True
             currentMessage = message
+        time.sleep(.05)
     try: 
         connectionSocket.send("exiting chatroom".encode())
     except (ConnectionResetError, TimeoutError) as err:
@@ -293,6 +294,7 @@ def sendChatroomMessage(connectionSocket, index):
                 users[index] == False
                 break
             sendingMessage = False
+        time.sleep(.05)
     print("\nexiting sendChatroom thread")
     
 def main():
