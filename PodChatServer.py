@@ -19,7 +19,7 @@ serverSocket.bind(('192.168.1.107',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
-offlineMessages = []
+offlineMessages = ["", "", "", "", "", "", "", "", "", ""] # save last 10 messages
 currentMessage = ""
 sendingMessage = False
 
@@ -57,6 +57,7 @@ def handle_client(connectionSocket, addr):
             break
         print("Server Message: " + message)
         if(loggedIn == False):
+            print("logged out options")
             # login/register options, initial login
             if(message.upper() == "LOGIN"):
                 print("login protocol")
@@ -78,10 +79,11 @@ def handle_client(connectionSocket, addr):
                     break
                 continue
         if(loggedIn == True):
+            print("logged in options")
             # options after login
             if(message.upper() == "CHATROOM"):
                 # connect user to chatroom
-                chatroom(connectionSocket)
+                chatroom(connectionSocket, USERNAME)
                 continue
             if(message.upper() == "LOGOUT"):
                 print("LOGOUT SUCCESSFUL")
@@ -232,17 +234,23 @@ def login(connectionSocket):
     return (str(STATUS) + "," + "")
         
 #chatroom creates a new user chatroom index, then starts receiving and sending messages in a thread
-def chatroom(connectionSocket):
+def chatroom(connectionSocket, USERNAME):
+    print(USERNAME + " has connected to the chatroom.")
     connectionSocket.send("Connected to chatroom, please send a message or type 'QUIT CHATROOM' to quit.".encode())
     global currentMessage
     global sendingMessage
     global users
     index = len(users) # save the index of this user
     users.append(True)
-    start_new_thread(sendChatroomMessage, (connectionSocket, index))
+    start_new_thread(sendChatroomMessage, (connectionSocket, index, USERNAME))
     start_new_thread(receiveChatroomMessage, (connectionSocket, index))
     while users[index] == True:
         time.sleep(.05)
+    try: 
+        connectionSocket.send("exiting chatroom".encode())
+    except ConnectionResetError:
+        print("Lost connection to user " + str(index))
+    users.pop()
     print("\nuser " + str(index) + " has exited the chatroom.")
     
 def receiveChatroomMessage(connectionSocket, index):
@@ -256,9 +264,9 @@ def receiveChatroomMessage(connectionSocket, index):
             print("\nUser: " + str(index) + " did not respond in time.")
             users[index] == True
             break
-        if(message.upper() == "QUIT CHATROOM"):
+        if(message.upper() == "QTCHATROOM"):
             print("\nQuitting chatroom")
-            users[index] = False; # stop chatroom
+            users[index] = False; # stop chatroom thread
             break
         if(len(message) > 0):
             sendingMessage = True
@@ -268,8 +276,8 @@ def receiveChatroomMessage(connectionSocket, index):
     except ConnectionResetError:
         print("Lost connection to user " + str(index))
         users[index] == True
-    
-def sendChatroomMessage(connectionSocket, index):
+    print("\nexiting receiveChatroom thread")
+def sendChatroomMessage(connectionSocket, index, USERNAME):
     global currentMessage
     global sendingMessage
     global users
@@ -277,13 +285,13 @@ def sendChatroomMessage(connectionSocket, index):
         if(sendingMessage):
             print("\nattempting to send message to client")
             try:
-                connectionSocket.send(currentMessage.encode())
+                connectionSocket.send((USERNAME + ": " + currentMessage).encode())
             except ConnectionResetError:
                 print("Lost connection to user " + str(index))
                 users[index] == True
                 break
             sendingMessage = False
-    
+    print("\nexiting sendChatroom thread")
     
 def main():
     global threadCount
