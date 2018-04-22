@@ -85,8 +85,7 @@ def handle_client(connectionSocket, addr):
                 chatroom(connectionSocket)
                 continue
             if(message.upper() == "LOGOUT"):
-                print("LOGOUT SUCCESSFUL")
-                connectionSocket.send("LOGOUT SUCCESSFUL".encode())
+                print(USERNAME + " has logged out.")
                 loggedIn = False
                 continue
 
@@ -268,7 +267,6 @@ def receiveChatroomMessage(connectionSocket, index):
         if(len(message) > 0):
             sendingMessage = True
             currentMessage = message
-        time.sleep(.05)
     try: 
         connectionSocket.send("exiting chatroom".encode())
     except (ConnectionResetError, TimeoutError) as err:
@@ -294,7 +292,6 @@ def sendChatroomMessage(connectionSocket, index):
                 users[index] == False
                 break
             sendingMessage = False
-        time.sleep(.05)
     print("\nexiting sendChatroom thread")
     
 def main():
