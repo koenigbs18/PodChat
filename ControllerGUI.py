@@ -339,7 +339,30 @@ class CreateChatRoom(tk.Frame):
         global username
 
         print(str(msg.get()))
-        clientSocket.send((username + ": " + str(msg.get())).encode())
+        index = 0
+        size = len(str(msg.get()))
+        print(((len(str(msg.get()))//32) + 1))
+
+
+        if size < 96:
+            spacestr = " "
+            spaceindex = 0
+
+            #while spaceindex < (len(username)*2):
+                #spacestr = spacestr + " "
+                #spaceindex = spaceindex + 1
+            if size <= 32:
+                print("sending message")
+                clientSocket.send((username + ": " + msg.get()[0:32]).encode())
+                time.sleep(1)
+            if size > 32 and size <= 64:
+                print("sending message")
+                clientSocket.send(msg.get()[32:64].encode())
+                time.sleep(1)
+            if size> 64 and size <= 96:
+                print("sending message")
+                clientSocket.send(msg.get()[64:96].encode())
+
         self.msgEntry.delete(0, 'end')
 
 
