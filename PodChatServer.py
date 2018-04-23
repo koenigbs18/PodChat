@@ -19,7 +19,7 @@ serverSocket.bind(('192.168.1.107',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
-offlineMessages = ["", "", "", "", "", "", "", "", "", ""] # save last 10 messages
+offlineMessages = [] # save last 10 messages
 currentMessage = ""
 sendingMessage = False
 
@@ -238,6 +238,21 @@ def chatroom(connectionSocket):
     global currentMessage
     global sendingMessage
     global users
+    # check for offline messages
+    appendMessages = "ignore9999999"
+    if (len(offlineMessages) > 0):
+        print("formatting messages")
+        # format offline messages into one string
+        for message in offlineMessages:
+            # no comma for the first message
+            if(message == offlineMessages[0]):
+                appendMessages = message
+            else:
+                appendMessages = appendMessages + "," + message
+        # flush the offline messages to the user
+    print("message: " + appendMessages)
+    connectionSocket.send(appendMessages.encode())
+    print("sent messages")
     index = len(users) # save the index of this user
     users.append(True)
     start_new_thread(sendChatroomMessage, (connectionSocket, index))
@@ -266,14 +281,12 @@ def receiveChatroomMessage(connectionSocket, index):
             break
         if(len(message) > 0):
             sendingMessage = True
+            # save the message in offline messages
+            if(len(offlineMessages) == 10):
+                del offlineMessages[0] # remove the first index
+            offlineMessages.append(message) # add the new message onto the end
+
             currentMessage = message
-    try: 
-        connectionSocket.send("exiting chatroom".encode())
-    except (ConnectionResetError, TimeoutError) as err:
-        print(err)
-        print(err.args)
-        print("Lost connection to user " + str(index))
-        users[index] == False
     print("\nexiting receiveChatroom thread")
 
 def sendChatroomMessage(connectionSocket, index):
