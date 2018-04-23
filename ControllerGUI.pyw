@@ -112,23 +112,17 @@ class PodChatApp(tk.Tk):
             global username
             clientSocket.send("Logout".encode())
             print("Client: sent Logout message to server.")
+            logoutMsg1 = clientSocket.recv(1024).decode('ascii')
+            print(logoutMsg1)
             username=None
             self.show_frame(Login)
 
         def chatroom_connection_protocol(self):
             global chatRoomActive
-            global listbox
             chatRoomActive=True
             global username
 
             clientSocket.send("Chatroom".encode())
-            offlinemsgs = clientSocket.recv(1024).decode('ascii')
-            print("message: " + offlinemsgs)
-            if len(offlinemsgs) > 0:
-                offlinemsgs = offlinemsgs.split(',')
-                for m in offlinemsgs:
-                    if m != "ignore9999999":
-                        listbox.insert(END, m)
 
             clientSocket.send((username + " has connected.").encode())
             # thread for receiving messages from server
@@ -139,7 +133,7 @@ class PodChatApp(tk.Tk):
         def chatRoomFromServer(self):
             global chatRoomActive
             global listbox
-
+            # clientSocket.listen(10)
             while chatRoomActive:
                 msg = clientSocket.recv(1024).decode('ascii')
                 if len(msg) > 0:
@@ -150,12 +144,11 @@ class PodChatApp(tk.Tk):
         def quit_chatroom(self):
             global chatRoomActive
             global username
-            global listbox
             chatRoomActive=False
 
             clientSocket.send((username + " has left.").encode())
             clientSocket.send("Qtchatroom".encode())
-            listbox.delete(0, END)
+
             self.show_frame(Menu)
 
 
@@ -285,14 +278,13 @@ class Menu(tk.Frame):
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
-        welcomemsg = "Welcome " + str(username)
 
         #Sign out button
         self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message
-        self.headerMsg = Label(self, text= welcomemsg, background='black', fg="white")
+        self.headerMsg = Label(self, text="What do you want to do?", background='black', fg="white")
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
@@ -300,8 +292,8 @@ class Menu(tk.Frame):
         self.chatRooms.grid(row=2, column=4)
 
         #Messages Button
-        #self.messages = Button(self, text="Messages", background='blue', fg='white', command=lambda: controller.show_frame(OfflineMessages))
-        #self.messages.grid(row=3, column=4)
+        self.messages = Button(self, text="Messages", background='blue', fg='white', command=lambda: controller.show_frame(OfflineMessages))
+        self.messages.grid(row=3, column=4)
 
         #Friends List Button
         #self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
