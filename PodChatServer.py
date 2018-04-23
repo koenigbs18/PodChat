@@ -241,7 +241,6 @@ def chatroom(connectionSocket):
     # check for offline messages
     appendMessages = "ignore9999999"
     if (len(offlineMessages) > 0):
-        print("formatting messages")
         # format offline messages into one string
         for message in offlineMessages:
             # no comma for the first message
@@ -250,9 +249,7 @@ def chatroom(connectionSocket):
             else:
                 appendMessages = appendMessages + "," + message
         # flush the offline messages to the user
-    print("message: " + appendMessages)
     connectionSocket.send(appendMessages.encode())
-    print("sent messages")
     index = len(users) # save the index of this user
     users.append(True)
     start_new_thread(sendChatroomMessage, (connectionSocket, index))
