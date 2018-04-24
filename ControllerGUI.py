@@ -287,17 +287,18 @@ class OfflineMessages(tk.Frame):
 class Menu(tk.Frame):
     #default initial frame code for every frame
     def __init__(self, parent, controller):
+        global username
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
-        welcomemsg = "Welcome " + parent.username.get()
+        #welcomemsg = "Welcome " + parent.username.get()
 
         #Sign out button
         self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message
-        self.headerMsg = Label(self, text= welcomemsg, background='black', fg="white")
+        self.headerMsg = Label(self, text= "Welcome ", background='black', fg="white")
         self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
 
         #Chat Rooms button
