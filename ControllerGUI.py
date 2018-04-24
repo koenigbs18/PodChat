@@ -10,7 +10,7 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "96.40.228.79"
+serverName = "127.0.0.1"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 chatRoomActive=False
@@ -158,6 +158,9 @@ class PodChatApp(tk.Tk):
             listbox.delete(0, END)
             self.show_frame(Menu)
 
+        def getUsername(self):
+            return username
+
 
         def Mbox(self, title, text, style):
             return ctypes.windll.user32.MessageBoxW(0, text, title, style)
@@ -171,7 +174,7 @@ class Login(tk.Frame):
         self.grid()
 
         #welcome message
-        self.welcomeMsg = Label(self, text="Welcome to Pod Chat!\n Created and Used by Millennials!", background='black', fg="white")
+        self.welcomeMsg = Label(self, text="Welcome to Pod Chat!", background='black', fg="white")
         self.welcomeMsg.grid(row=0, sticky=N, columnspan=2, padx=50, pady=(25, 0))
 
         #username label
@@ -201,6 +204,10 @@ class Login(tk.Frame):
         #register button
         self.register = Button(self, text="Register", background='red', fg='white', command=lambda: controller.show_frame(Register))
         self.register.grid(row=4, column=1, pady=(50, 0))
+
+        #welcome message
+        self.welcomeMsg = Label(self, text="Copyright 2018. Created and used by millennials.", background='black', fg="white", font=('', 8))
+        self.welcomeMsg.grid(row=5, sticky=N, columnspan=2, pady=(100, 0))
 
 class Register(tk.Frame):
     def __init__(self, parent, controller):
@@ -278,14 +285,12 @@ class OfflineMessages(tk.Frame):
 
 
 class Menu(tk.Frame):
-
     #default initial frame code for every frame
     def __init__(self, parent, controller):
-        global username
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
-        welcomemsg = "Welcome " + str(username)
+        welcomemsg = "Welcome " + parent.username.get()
 
         #Sign out button
         self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
@@ -299,13 +304,11 @@ class Menu(tk.Frame):
         self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.chatroom_connection_protocol())
         self.chatRooms.grid(row=2, column=4)
 
-        #Messages Button
-        #self.messages = Button(self, text="Messages", background='blue', fg='white', command=lambda: controller.show_frame(OfflineMessages))
-        #self.messages.grid(row=3, column=4)
+    # def getUsername(self):
+    #     global username
+    #     print(self.username.get())
+    #     return self.username.get()
 
-        #Friends List Button
-        #self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
-        #self.friendsList.grid(row=4, column=4)
 
 class CreateChatRoom(tk.Frame):
 

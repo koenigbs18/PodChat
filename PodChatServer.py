@@ -15,7 +15,7 @@ import csv
 serverPort = 12009
 serverSocket = socket(AF_INET,SOCK_STREAM)
 #serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-serverSocket.bind(('192.168.1.107',serverPort))
+serverSocket.bind(('127.0.0.1',serverPort))
 serverSocket.listen(10)
 threadCount = 0
 users = []
