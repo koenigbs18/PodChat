@@ -55,11 +55,10 @@ def handle_client(connectionSocket, addr):
             print(err.args)
             print("User: " + str(threadCount-1) + " did not respond in time.")
             break
-        print("Server Message: " + message)
+        print("Server Received Message: " + message)
         if(loggedIn == False):
             # login/register options, initial login
             if(message.upper() == "LOGIN"):
-                print("login protocol")
                 # connect user to chatroom
                 returnMessage = login(connectionSocket).split(',')
                 LOGIN_STATUS = returnMessage[0]
@@ -273,7 +272,6 @@ def sendChatroomMessage(connectionSocket, index):
     global users
     while(users[index] == True):
         if(sendingMessage):
-            print("\nattempting to send message to client")
             try:
                 connectionSocket.send(currentMessage.encode())
             except (ConnectionResetError, TimeoutError) as err:
