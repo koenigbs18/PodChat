@@ -10,12 +10,13 @@ import subprocess
 
 # client code
 # create a socket and connect to the server
-serverName = "96.40.228.79"
+serverName = "127.0.0.1"
 serverPort = 12009
 clientSocket = socket(AF_INET, SOCK_STREAM)
 chatRoomActive=False
 listbox=None
 username=None
+headerMsg=None
 try:
     clientSocket.connect((serverName, serverPort))
 except TimeoutError as e:
@@ -55,6 +56,7 @@ class PodChatApp(tk.Tk):
 
         def login_protocol(self, userNameEntry, pwdEntry):
             global username
+            global headerMsg
             clientSocket.send("Login".encode())
             SERVER_INFO = clientSocket.recv(1024).decode('ascii')
             print("server info:" + str(SERVER_INFO))
@@ -69,6 +71,7 @@ class PodChatApp(tk.Tk):
 
             if "SUCCESS" in loginValidation.upper():
                 username=str(userNameEntry.get())
+                headerMsg['text'] = "Welcome " + username
                 self.show_frame(Menu)
                 return
             else:
@@ -112,17 +115,24 @@ class PodChatApp(tk.Tk):
             global username
             clientSocket.send("Logout".encode())
             print("Client: sent Logout message to server.")
-            logoutMsg1 = clientSocket.recv(1024).decode('ascii')
-            print(logoutMsg1)
             username=None
             self.show_frame(Login)
 
         def chatroom_connection_protocol(self):
             global chatRoomActive
+            global listbox
             chatRoomActive=True
             global username
 
             clientSocket.send("Chatroom".encode())
+            offlinemsgs = clientSocket.recv(1024).decode('ascii')
+            print("message: " + offlinemsgs)
+            if len(offlinemsgs) > 0:
+                offlinemsgs = offlinemsgs.split(',')
+                for m in offlinemsgs:
+                    if m != "ignore9999999":
+                        print("inserting " + m)
+                        listbox.insert(END, m)
 
             clientSocket.send((username + " has connected.").encode())
             # thread for receiving messages from server
@@ -133,23 +143,28 @@ class PodChatApp(tk.Tk):
         def chatRoomFromServer(self):
             global chatRoomActive
             global listbox
-            # clientSocket.listen(10)
-            while chatRoomActive:
+
+            while chatRoomActive == True:
                 msg = clientSocket.recv(1024).decode('ascii')
                 if len(msg) > 0:
                     listbox.insert(END, msg)
                     listbox.yview(END)
                     print(msg)
+            print("chatroom thread ended")
 
         def quit_chatroom(self):
             global chatRoomActive
             global username
+            global listbox
             chatRoomActive=False
 
             clientSocket.send((username + " has left.").encode())
             clientSocket.send("Qtchatroom".encode())
-
+            listbox.delete(0, END)
             self.show_frame(Menu)
+
+        def getUsername(self):
+            return username
 
 
         def Mbox(self, title, text, style):
@@ -164,7 +179,7 @@ class Login(tk.Frame):
         self.grid()
 
         #welcome message
-        self.welcomeMsg = Label(self, text="Welcome to Pod Chat!\n Created and Used by Millennials!", background='black', fg="white")
+        self.welcomeMsg = Label(self, text="Welcome to Pod Chat!", background='black', fg="white")
         self.welcomeMsg.grid(row=0, sticky=N, columnspan=2, padx=50, pady=(25, 0))
 
         #username label
@@ -194,6 +209,10 @@ class Login(tk.Frame):
         #register button
         self.register = Button(self, text="Register", background='red', fg='white', command=lambda: controller.show_frame(Register))
         self.register.grid(row=4, column=1, pady=(50, 0))
+
+        #welcome message
+        self.welcomeMsg = Label(self, text="Copyright 2018. Created and used by millennials.", background='black', fg="white", font=('', 8))
+        self.welcomeMsg.grid(row=5, sticky=N, columnspan=2, pady=(100, 0))
 
 class Register(tk.Frame):
     def __init__(self, parent, controller):
@@ -271,33 +290,33 @@ class OfflineMessages(tk.Frame):
 
 
 class Menu(tk.Frame):
-
     #default initial frame code for every frame
     def __init__(self, parent, controller):
         global username
+        global headerMsg
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
+        #welcomemsg = "Welcome " + parent.username.get()
 
         #Sign out button
         self.signOutButton = Button(self, text="Sign Out", background='red', fg='white', command=lambda: controller.logout_protocol())
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message
-        self.headerMsg = Label(self, text="What do you want to do?", background='black', fg="white")
-        self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
+        self.headerMsg1 = Label(self, text= "Welcome ", background='black', fg="white")
+        self.headerMsg1.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
+        headerMsg = self.headerMsg1
 
         #Chat Rooms button
         self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.chatroom_connection_protocol())
-        self.chatRooms.grid(row=2, column=4)
+        self.chatRooms.grid(row=4, column=5, padx=40, pady = 6)
 
-        #Messages Button
-        self.messages = Button(self, text="Messages", background='blue', fg='white', command=lambda: controller.show_frame(OfflineMessages))
-        self.messages.grid(row=3, column=4)
+    # def getUsername(self):
+    #     global username
+    #     print(self.username.get())
+    #     return self.username.get()
 
-        #Friends List Button
-        #self.friendsList = Button(self, text="Friends List", background='blue', fg='white')
-        #self.friendsList.grid(row=4, column=4)
 
 class CreateChatRoom(tk.Frame):
 
@@ -329,9 +348,27 @@ class CreateChatRoom(tk.Frame):
 
     def sendMessage(self, msg):
         global username
+        size = len(str(msg.get()))
+        spacestr = ""
+        spaceindex = 0
 
-        print(str(msg.get()))
-        clientSocket.send((username + ": " + str(msg.get())).encode())
+        index = 0
+        sendCount = -(-size//32) # amount of messages to send
+
+        while spaceindex < (len(username)*2):
+            spacestr = spacestr + " "
+            spaceindex = spaceindex + 1
+
+        if size > 0:
+            clientSocket.send((username + ": " + msg.get()[0:32]).encode())
+            time.sleep(.05)
+            if size >= 32:
+                time.sleep(.05)
+                clientSocket.send((spacestr + msg.get()[32:64]).encode())
+                time.sleep(.05)
+                if size >= 64:
+                    clientSocket.send((spacestr + msg.get()[64:96]).encode())
+
         self.msgEntry.delete(0, 'end')
 
 

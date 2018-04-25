@@ -16,6 +16,7 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 chatRoomActive=False
 listbox=None
 username=None
+headerMsg=None
 try:
     clientSocket.connect((serverName, serverPort))
 except TimeoutError as e:
@@ -55,6 +56,7 @@ class PodChatApp(tk.Tk):
 
         def login_protocol(self, userNameEntry, pwdEntry):
             global username
+            global headerMsg
             clientSocket.send("Login".encode())
             SERVER_INFO = clientSocket.recv(1024).decode('ascii')
             print("server info:" + str(SERVER_INFO))
@@ -69,6 +71,7 @@ class PodChatApp(tk.Tk):
 
             if "SUCCESS" in loginValidation.upper():
                 username=str(userNameEntry.get())
+                headerMsg['text'] = "Welcome " + username
                 self.show_frame(Menu)
                 return
             else:
@@ -128,6 +131,7 @@ class PodChatApp(tk.Tk):
                 offlinemsgs = offlinemsgs.split(',')
                 for m in offlinemsgs:
                     if m != "ignore9999999":
+                        print("inserting " + m)
                         listbox.insert(END, m)
 
             clientSocket.send((username + " has connected.").encode())
@@ -140,12 +144,13 @@ class PodChatApp(tk.Tk):
             global chatRoomActive
             global listbox
 
-            while chatRoomActive:
+            while chatRoomActive == True:
                 msg = clientSocket.recv(1024).decode('ascii')
                 if len(msg) > 0:
                     listbox.insert(END, msg)
                     listbox.yview(END)
                     print(msg)
+            print("chatroom thread ended")
 
         def quit_chatroom(self):
             global chatRoomActive
@@ -288,6 +293,7 @@ class Menu(tk.Frame):
     #default initial frame code for every frame
     def __init__(self, parent, controller):
         global username
+        global headerMsg
         tk.Frame.__init__(self, parent)
         tk.Frame.configure(self, background='black')
         self.grid()
@@ -298,12 +304,13 @@ class Menu(tk.Frame):
         self.signOutButton.grid(row=0, padx=10, pady=10)
 
         #header message
-        self.headerMsg = Label(self, text= "Welcome ", background='black', fg="white")
-        self.headerMsg.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
+        self.headerMsg1 = Label(self, text= "Welcome ", background='black', fg="white")
+        self.headerMsg1.grid(row=1, column=3, columnspan=3, sticky=N, pady=25)
+        headerMsg = self.headerMsg1
 
         #Chat Rooms button
         self.chatRooms = Button(self, text="Chat Room", background='blue', fg='white', command=lambda: controller.chatroom_connection_protocol())
-        self.chatRooms.grid(row=2, column=4)
+        self.chatRooms.grid(row=4, column=5, padx=40, pady = 6)
 
     # def getUsername(self):
     #     global username
@@ -341,31 +348,26 @@ class CreateChatRoom(tk.Frame):
 
     def sendMessage(self, msg):
         global username
-
-        print(str(msg.get()))
-        index = 0
         size = len(str(msg.get()))
-        print(((len(str(msg.get()))//32) + 1))
+        spacestr = ""
+        spaceindex = 0
 
+        index = 0
+        sendCount = -(-size//32) # amount of messages to send
 
-        if size < 96:
-            spacestr = " "
-            spaceindex = 0
+        while spaceindex < (len(username)*2):
+            spacestr = spacestr + " "
+            spaceindex = spaceindex + 1
 
-            #while spaceindex < (len(username)*2):
-                #spacestr = spacestr + " "
-                #spaceindex = spaceindex + 1
-            if size <= 32:
-                print("sending message")
-                clientSocket.send((username + ": " + msg.get()[0:32]).encode())
-                time.sleep(1)
-            if size > 32 and size <= 64:
-                print("sending message")
-                clientSocket.send(msg.get()[32:64].encode())
-                time.sleep(1)
-            if size> 64 and size <= 96:
-                print("sending message")
-                clientSocket.send(msg.get()[64:96].encode())
+        if size > 0:
+            clientSocket.send((username + ": " + msg.get()[0:32]).encode())
+            time.sleep(.05)
+            if size >= 32:
+                time.sleep(.05)
+                clientSocket.send((spacestr + msg.get()[32:64]).encode())
+                time.sleep(.05)
+                if size >= 64:
+                    clientSocket.send((spacestr + msg.get()[64:96]).encode())
 
         self.msgEntry.delete(0, 'end')
 

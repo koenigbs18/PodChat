@@ -237,18 +237,21 @@ def login(connectionSocket):
 def chatroom(connectionSocket):
     global currentMessage
     global sendingMessage
+    global offlineMessages
     global users
     # check for offline messages
     appendMessages = "ignore9999999"
     if (len(offlineMessages) > 0):
         # format offline messages into one string
+        index = 0
         for message in offlineMessages:
             # no comma for the first message
-            if(message == offlineMessages[0]):
+            if(index == 0):
                 appendMessages = message
             else:
                 appendMessages = appendMessages + "," + message
-        # flush the offline messages to the user
+            index = index + 1
+    # flush the offline messages to the user
     connectionSocket.send(appendMessages.encode())
     index = len(users) # save the index of this user
     users.append(True)
@@ -262,6 +265,7 @@ def chatroom(connectionSocket):
 def receiveChatroomMessage(connectionSocket, index):
     global currentMessage
     global sendingMessage
+    global offlineMessages
     global users
     while users[index] == True:
         try:
@@ -279,12 +283,11 @@ def receiveChatroomMessage(connectionSocket, index):
         if(len(message) > 0):
             sendingMessage = True
             # save the message in offline messages
-            if(len(offlineMessages) == 10):
+            if(len(offlineMessages) == 30):
                 del offlineMessages[0] # remove the first index
             offlineMessages.append(message) # add the new message onto the end
-
             currentMessage = message
-    print("\nexiting receiveChatroom thread")
+    print("\nexiting receiveChatroom thread for user " + str(index))
 
 def sendChatroomMessage(connectionSocket, index):
     global currentMessage
@@ -302,7 +305,7 @@ def sendChatroomMessage(connectionSocket, index):
                 users[index] == False
                 break
             sendingMessage = False
-    print("\nexiting sendChatroom thread")
+    print("\nexiting sendChatroom thread for user" + str(index))
     
 def main():
     global threadCount
