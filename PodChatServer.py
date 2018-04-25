@@ -57,7 +57,6 @@ def handle_client(connectionSocket, addr):
             break
         print("Server Message: " + message)
         if(loggedIn == False):
-            print("logged out options")
             # login/register options, initial login
             if(message.upper() == "LOGIN"):
                 print("login protocol")
@@ -73,12 +72,10 @@ def handle_client(connectionSocket, addr):
                     break
                 continue
             if(message.upper() == "REGISTER"):
-                print("Registration protocol")
                 if(registration(connectionSocket) == ENUMS.CONNECTION_ERROR):
                     break
                 continue
         if(loggedIn == True):
-            print("logged in options")
             # options after login
             if(message.upper() == "CHATROOM"):
                 # connect user to chatroom
@@ -105,7 +102,6 @@ def handle_client(connectionSocket, addr):
     connectionSocket.close()
 
 def registration(connectionSocket):
-    print("Entering registration code")
     STATUS = ENUMS.NULL
     REASON = ""
     REASONPASS = ""
@@ -121,36 +117,28 @@ def registration(connectionSocket):
         with open('registeredusers.csv', 'r') as USER_FILE:
             READER = csv.reader(USER_FILE)
             for row in READER:
-                print("Printing current row: "+str(row))
                 if REGINFO[0] not in row and REGINFO[1] not in row:
                     if len(REGINFO[2]) >= 6:
                         STATUS = ENUMS.REGISTRATION_REQUIRED
                     else:
-                        print("Password length is shorter than 6")
                         REASONPASS = "Password length is shorter than 6\n"
                         STATUS = ENUMS.FAILURE_REG
                 else:
                     if REGINFO[0] in row:
-                        print("The email you entered is already in use")
                         REASON += "The email you entered is already in use\n"
                         STATUS = ENUMS.FAILURE_REG
                     if REGINFO[1] in row:
-                        print("The username you entered is already in use")
                         REASON += "The username  you entered is already in use\n"
                         STATUS = ENUMS.FAILURE_REG
                     if len(REGINFO[2]) < 6:
-                        print("Password length is shorter than 6")
                         REASONPASS = "Password length is shorter than 6\n"
                         STATUS = ENUMS.FAILURE_REG
                     break
-                print("Done with row")
-            print("Done reading from registeredusers.csv")
     except FileNotFoundError:
-        print("File Not Found")
+        print("FILE ERROR ON SERVER: REGISTEREDUSERS.CSV FILE NOT FOUND")
         open("registeredusers.csv", 'w') #create file
         STATUS = ENUMS.READ_ERROR
     if STATUS == ENUMS.REGISTRATION_REQUIRED:
-        print("Entering needs to register code")
         REGISTRATION_RECORD = REGINFO[0]+","+REGINFO[1]+","+REGINFO[2]+"\n"
         with open('registeredusers.csv', 'a') as OUTPUT_FILE:
             OUTPUT_FILE.write(REGISTRATION_RECORD)
@@ -158,24 +146,19 @@ def registration(connectionSocket):
             STATUS = ENUMS.SUCCESS
     # Return the enum status
     if STATUS == ENUMS.SUCCESS:
-        print("SUCCESS: REGISTRATION SUCCESSFUL")
         connectionSocket.send("SUCCESS: REGISTRATION SUCCESSFUL".encode())
     elif STATUS == ENUMS.READ_ERROR:
-        print("FAILURE: SERVER FILE ERROR")
         connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
     elif STATUS == ENUMS.FAILURE_REG:
-        print("FAILURE: REGISTRATION ERROR")
         SEND = "FAILURE: REGISTRATION ERROR\n"
         SEND += REASON
         SEND += REASONPASS
         connectionSocket.send(SEND.encode())
     elif STATUS == ENUMS.NULL:
-        print("FAILURE: NULL SERVER RESPONSE")
         connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
     return STATUS
 
 def login(connectionSocket):
-    print("login protocol")
     # default status
     STATUS = ENUMS.NULL
     # request login info from client
@@ -196,7 +179,6 @@ def login(connectionSocket):
         return ENUMS.FAILURE_GENERIC
     #Open the registeredusers.txt file to check the username & password
     if(len(LOGININFO) != 2):
-        print("LOGIN INFO INVALID")
         connectionSocket.send("FAILURE: INVALID LOGIN PARAMETERS".encode())
         return (str(STATUS) + "," + "")
     try:
@@ -217,18 +199,14 @@ def login(connectionSocket):
 
     # Return the enum status
     if(STATUS == ENUMS.SUCCESS):
-        print("SUCCESS: LOGIN SUCCESSFUL")
         # return ENUM.STATUS,USERNAME
         connectionSocket.send("SUCCESS: LOGIN SUCCESSFUL".encode())
         return (str(STATUS) + "," + LOGININFO[0])
     elif(STATUS == ENUMS.READ_ERROR):
-        print("FAILURE: SERVER FILE ERROR")
         connectionSocket.send("FAILURE: SERVER FILE ERROR".encode())
     elif(STATUS == ENUMS.FAILURE_INCORRECT):
-        print("FAILURE: INCORRECT LOGIN INFO")
         connectionSocket.send("FAILURE: INCORRECT LOGIN INFO".encode())
     elif(STATUS == ENUMS.NULL):
-        print("FAILURE: NULL SERVER RESPONSE")
         connectionSocket.send("FAILURE: NULL SERVER RESPONSE".encode())
 
     return (str(STATUS) + "," + "")
