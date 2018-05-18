@@ -11,9 +11,13 @@ Developed in Python.
 Credits
 
 Server
+
 Brett Koenig, KoenigBS18@uww.edu
+
 Paul Knisely,  KniselyPD16@uww.edu
 
 Client/GUI
+
 Paulette Currington, CurringtPM17@uww.edu
+
 Kayin Moore, MooreKJ16@uww.edu
